@@ -22,6 +22,7 @@ if($type == "minimal")
         "mysqldump  -u sea --password=saline12 --database geov_core --tables ".
         "core_module ".
         "core_page ".
+        "core_vehicle ".
         "core_vehicle_default; ";
 
         

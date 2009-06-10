@@ -1134,7 +1134,9 @@ function history()
 // maximum number of points allowed on screen (actual value could be more, depending on data density)
 // better to think of this of time delta between values on the screen, rather than an actual number of points
 // this way of doing it gives it more equality to vehicles that report less often.
-    $point_limit = 2000;
+//    $point_limit = 2000;
+    $point_limit = 0;
+    
     
 // seconds elapsed between data points to define a new data set
     $set_time = 600;
@@ -1183,6 +1185,7 @@ function history()
 // assuming a minimum time spacing of one second
     
     $time_gap = ($point_limit != 0) ? ceil($num_rows/$point_limit) : 1;
+
     
     $query =
         "SELECT ".
