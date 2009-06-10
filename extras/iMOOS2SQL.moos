@@ -1,0 +1,53 @@
+// Simple .moos file for iMOOS2SQL
+
+ServerHost = localhost
+ServerPort = 9000
+
+// Dabob 
+// Note: lat/long origin *optional* if AIS_REPORT contains LAT/LON
+LatOrigin  = 47.731900
+LongOrigin = -122.85000
+
+
+Community = iMOOS2SQL_default
+
+//------------------------------------------------------------------
+// Antler configuration  block
+ProcessConfig = ANTLER
+{
+  MSBetweenLaunches = 200
+  Run = MOOSDB		@ NewConsole = false
+  Run = iMOOS2SQL	@ NewConsole = true
+}
+
+
+//------------------------------------------------------------------
+// iMOOS2SQL configuration  block
+
+ProcessConfig = iMOOS2SQL
+{
+
+// available to all moos processes.
+// running iMOOS2SQL at 4 times / second is fine
+  AppTick    = 4
+  CommsTick  = 4
+
+
+  //mysql server parameters
+  mysql_host = 128.128.193.33
+  mysql_user =
+  mysql_password = 
+  mysql_port = 3306
+
+  mysql_core_db_name = geov_core
+
+  parse_ais = true
+  
+  // all other databases must be at the same host. you can specify any number of auxilary (module) databases
+  mysql_aux_db_name = geov_moos_cp
+
+  // echo = moos_var -> mysql_databse, blackout_time (will not publish more than once every this number of seconds)
+  echo = DB_TIME -> geov_moos_cp, 4
+  echo = AIS_REPORT -> geov_moos_cp, 2
+
+}

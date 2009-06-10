@@ -1,0 +1,92 @@
+body
+{
+	color: #333366;
+}
+
+span
+{
+	color: #333333;
+}
+
+pre
+{
+	color: #333333;	
+}
+
+h1
+{
+	color: #000033;
+}
+
+h2
+{
+	color: #000033;
+}
+
+
+h3
+{
+	color: #000033;
+}
+
+
+
+h4
+{
+	color: #000033;
+}
+
+small
+{
+	color: #000033;
+}
+
+
+a:link
+{
+	color: #333366;
+	text-decoration: underline;
+
+}
+a:visited
+{
+	color: #666666;
+	text-decoration: underline;
+}
+
+a img
+{
+        border: none ;
+} 
+
+td
+{  
+   	border-style:solid;
+	border-width:1px;
+ 	border-color: #CCCCCC;
+  	color: #333333;	
+	padding: 3px;
+}
+
+td.odd
+{
+	background-color: #FFFFFF;	
+}
+
+td.even
+{
+	background-color: #F0F0FF;
+}
+
+button
+{       
+   border-style:none;
+   border-color:#FFFFFF;
+   border-width:0px;
+   background-color: #E0E0EE;      
+}
+
+p.red
+{
+    color: #FF0000;
+}

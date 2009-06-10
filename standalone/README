@@ -1,0 +1,11 @@
+You will need the php command line interface to run the 
+em3000.php. 
+
+In Ubuntu this is 
+> sudo apt-get install php-cli
+
+then you can convert the EM3000 contour.daf file to a kml file (here "example.kml") by running
+
+./em3000.php contour.daf > example.kml
+
+then you can open example.kml in Google Earth

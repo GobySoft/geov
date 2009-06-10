@@ -1,0 +1,32 @@
+release notes for geov:
+
+pre v1.0
+features:
+- added simulation mode
+- added standalone tool to produce google earth KML file from EM3000 sonar bathymetry data
+- streamlined selection of viewable vehicles in profile manager
+- GE "flies to" the area of the world with vehicles when launched
+
+bug fixes:
+- profile.php adds vehicles to display without rebinding.
+- you can now properly disable vehicles in the vehicle manager
+- core now refreshes properly on restart of google earth
+- module copy also activates module on new profile in not already active
+
+v0.9: 2.9.09 (SVN revision 153):
+features:
+- added ability to bind a single profile to multiple ip addresses (so several computers can see same profile configuration)
+- can now view vehicle depth in all modes in GE v5.
+- vehicles now have clickable icons that show most recent data.
+- incorporated AIS_REPORT parsing to import_alog (thanks to Arjan Vermeij)
+- can copy module configuration to other profiles without copying entire profile
+- all xml (including kml / html) output streamlined to use include/xml_writer.php and extended classes instead of using "echo".
+- vehicle images can now be scaled to the same (rough) area rather than using the actual size.
+
+bug fixes:
+- parameters no longer reset values when changing profile types (using rename feature on profile manager)
+- track option fixed.
+
+
+v0.8 (SVN revision 144) and previous (11.1.07-2.9.09):
+- release notes not kept. software was in rapid development on subversion only (no releases).

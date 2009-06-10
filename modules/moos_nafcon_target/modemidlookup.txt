@@ -1,0 +1,5 @@
+// modem id, vehicle name (should be community name), vehicle type, other aliases
+1, alliance_topside, laptop
+2, leonardo_topside, laptop
+3, unicorn, auv
+4, macrura, auv

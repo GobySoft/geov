@@ -1,0 +1,8 @@
+drop table core_profile_show
+
+add table core_profile_module
+
+add field in core_data for data_userid
+add field in geov_*.*_data for data_userid
+
+add bool field in core_profile -> profile_simulation

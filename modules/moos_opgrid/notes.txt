@@ -1,0 +1,4 @@
+// table uses special trigger
+// set delimiter to '//' in phpmyadmin
+CREATE TRIGGER force_reload BEFORE UPDATE ON moos_opgrid_profile FOR EACH ROW IF OLD.profile_reload = 0 THEN SET NEW.profile_reload = 1;
+END IF;
