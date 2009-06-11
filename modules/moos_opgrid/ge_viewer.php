@@ -274,7 +274,8 @@ function opgrid()
 
 
     // autoshow!    
-    autoshow($autoshow, $autoshowexpand, $grid, $datum);
+    if($pmode == "realtime")
+        autoshow($autoshow, $autoshowexpand, $grid, $datum);
 
     if(!$displaygrid)
         return true;

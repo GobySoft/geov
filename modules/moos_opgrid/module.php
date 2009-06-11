@@ -23,6 +23,8 @@ $veh_parameter =
             "title" => "managed by autoshow",
             "mysql_key" => "p_vehicle_auto",
             "input" => "checkbox",
+            "playback" => "false",
+            "history" => "false",
             ),
         );
 
@@ -78,11 +80,15 @@ $gen_parameter =
             "title" => "automatically show vehicles within opregion",
             "mysql_key" => "profile_autoshow",
             "input" => "checkbox",
+            "playback" => "false",
+            "history" => "false",
             ),
         array(
             "title" => "automatically show vehicles: <br /> opregion expansion (meters)",
             "mysql_key" => "profile_autoshowexpand",
             "input" => "text",
+            "playback" => "false",
+            "history" => "false",
             ),
         
         );
