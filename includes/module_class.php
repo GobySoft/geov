@@ -779,32 +779,26 @@ class Module
 
     function add_vehicle_row($profileid, $vehicleid)
     {
-
+        if(!$this->vtable)
+            return;
+        
+        $query =
+            "INSERT INTO ".$this->db.".".$this->name."_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid) ".
+            "VALUES('$profileid', '$vehicleid') ";
         
         // add vehicle entries as they are needed
-
-        $query =
-            "SELECT p_vehicle_id ".
-            "FROM ".$this->db.".".$this->name."_profile_vehicle ".
-            "WHERE p_vehicle_vehicleid = ".$vehicleid." ".
-            "AND p_vehicle_profileid = ".$profileid;
-
-        
-        $result = mysql_query($query) or die(mysql_error());
-
-        
-        if(!mysql_num_rows($result))
+        if($this->name == "core")
         {
-            $query =
-                "INSERT INTO ".
-                $this->db.".".$this->name."_profile_vehicle ".
-                " (p_vehicle_profileid, p_vehicle_vehicleid) ".
-                "VALUES ".
-                " ('$profileid','$vehicleid')";
-  
-            mysql_query($query) or die(mysql_error());
+            $query .=
+                "ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
         }
-
+        else
+            $query .=
+                "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
+        
+        mysql_query($query) or die(mysql_error());
+        
+        
     }
     
 

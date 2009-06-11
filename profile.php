@@ -975,20 +975,10 @@ function profile_save($profileid)
             {
                 foreach($type_array as $vid)
                 {
-                    $query =
-                        "DELETE FROM core_profile_vehicle ".
-                        "WHERE p_vehicle_vehicleid = '".$vid."' ".
-                        "AND p_vehicle_profileid = ".$profileid;
-                    
-                    mysql_query($query) or die(mysql_error());
-                    
-                    $query =
-                        "INSERT INTO core_profile_vehicle ".
-                        " (p_vehicle_profileid, p_vehicle_vehicleid) ".
-                        "VALUES ".
-                        " ('$profileid', '$vid')";                    
-                    
-                     mysql_query($query) or die(mysql_error());
+                    foreach($module_class as $module)
+                    {
+                        $module->add_vehicle_row($profileid, $vid);
+                    }
                 }
             }
         

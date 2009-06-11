@@ -11,6 +11,22 @@ $mysql_base_table =
             )
         );
 
+$mysql_sub_table =
+    array(
+        "vehicle" => array(
+            )
+        );
+
+$veh_parameter =
+    array(
+        array(
+            "title" => "managed by autoshow",
+            "mysql_key" => "p_vehicle_auto",
+            "input" => "checkbox",
+            ),
+        );
+
+
 $gen_parameter =
     array(
         array(
@@ -56,6 +72,16 @@ $gen_parameter =
         array(
             "title" => "markers specified in x/y. <br /> format: x1,y1,name1:x2,y2,name2",
             "mysql_key" => "profile_markers",
+            "input" => "text",
+            ),
+        array(
+            "title" => "automatically show vehicles within opregion",
+            "mysql_key" => "profile_autoshow",
+            "input" => "checkbox",
+            ),
+        array(
+            "title" => "automatically show vehicles: <br /> opregion expansion (meters)",
+            "mysql_key" => "profile_autoshowexpand",
             "input" => "text",
             ),
         

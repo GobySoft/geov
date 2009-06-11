@@ -8,6 +8,10 @@
 
 define("GE_CLIENT_ID", 2);
 
+// temporal lifetime of autoshow targets
+define("AUTOSHOW_DECAY", 600);
+
+
 /************************************************************************************
  connections
 ************************************************************************************/
@@ -33,13 +37,17 @@ $geodesy =& new gPoint();
 
 list($ip, $cid, $pid, $sim_id, $pname, $pmode, $preload) = establish_connection("moos_opgrid");
 
-if($preload)
-    opgrid();
+opgrid();
 
 //die();
 
+if(!$preload)
+    $kml = new opgrid_kml_writer;
+
+
 $kml->echo_kml();
 
+    
 /************************************************************************************
  functions
 ************************************************************************************/
@@ -51,6 +59,7 @@ function opgrid()
     global $pid;
     global $geodesy;
     global $sim_id;
+
     
     
     $kml->push("Document");
@@ -74,11 +83,15 @@ function opgrid()
     $datum["lat"] = (double)$row["profile_datumlat"];
     $datum["lon"] = (double)$row["profile_datumlon"];
 
+        
     if(!$datum["lat"] && !$datum["lon"])
     {
         $datum["lat"] = mysql_get_single_value("SELECT data_value FROM geov_moos_opgrid.moos_opgrid_data WHERE data_variable='LAT_ORIGIN' AND data_userid = $sim_id ORDER BY data_id DESC LIMIT 1");
         $datum["lon"] = mysql_get_single_value("SELECT data_value FROM geov_moos_opgrid.moos_opgrid_data WHERE data_variable='LONG_ORIGIN' AND data_userid = $sim_id ORDER BY data_id DESC LIMIT 1");
     }
+
+    $autoshow = $row["profile_autoshow"]; //bool
+    $autoshowexpand = $row["profile_autoshowexpand"]; //bool
     
     // calculate meters x and y from zone origin to datum
     $geodesy->setLongLat($datum["lon"], $datum["lat"]);
@@ -141,8 +154,9 @@ function opgrid()
     else
     {
         $kml->kerr("no opbox specified!");        
-    }
+    }    
 
+    
     //define styles
     $kml->push("Style", array("id"=>"moos_opgrid_opboxstyle"));
     $kml->push("LineStyle");
@@ -229,23 +243,6 @@ function opgrid()
 
     $kml->pop(); //folder
 
-    if(!$displaygrid)
-        return true;
-        
-    $kml->push("Folder", array("id" => "moos_opgrid_grid_folder"));
-    $kml->element("name", "operation local grid");
-    
-    $kml->push("Style");
-    $kml->push("ListStyle", array("id" => "moos_opgrid_gridliststyle"));
-    $kml->element("listItemType", "checkHideChildren");
-    $kml->pop();
-    $kml->pop();
-    
-    $kml->push("Placemark", array("id"=>"moos_opgrid_grid_placemark"));
-    $kml->element("styleUrl", "#moos_opgrid_gridstyle");
-    $kml->push("LineString");
-    $kml->element("tessellate", "1");
-    $kml->push("coordinates");
 
     // 0 = lower left, 1 = upper left, 2 = upper right, 3 = lower right
     $min["x"] = inf;
@@ -274,6 +271,28 @@ function opgrid()
     $grid[2]["x"] = $max["x"];
     $grid[3]["y"] = $min["y"];
     $grid[3]["x"] = $max["x"];
+
+
+    // autoshow!    
+    autoshow($autoshow, $autoshowexpand, $grid, $datum);
+
+    if(!$displaygrid)
+        return true;
+        
+    $kml->push("Folder", array("id" => "moos_opgrid_grid_folder"));
+    $kml->element("name", "operation local grid");
+    
+    $kml->push("Style");
+    $kml->push("ListStyle", array("id" => "moos_opgrid_gridliststyle"));
+    $kml->element("listItemType", "checkHideChildren");
+    $kml->pop();
+    $kml->pop();
+    
+    $kml->push("Placemark", array("id"=>"moos_opgrid_grid_placemark"));
+    $kml->element("styleUrl", "#moos_opgrid_gridstyle");
+    $kml->push("LineString");
+    $kml->element("tessellate", "1");
+    $kml->push("coordinates");
     
     foreach($grid as $value)
     {
@@ -456,4 +475,130 @@ function plot_markers($markers, $datum)
     
 }
 
-?>
+
+
+function autoshow($enabled, $expand, $grid, $datum)
+{
+    global $kml;
+    global $cid;
+    global $pid;
+    global $sim_id;
+    global $geodesy;
+    
+    // 0 = lower left, 1 = upper left, 2 = upper right, 3 = lower right
+    // $grid[0]["x"]
+
+    $showgrid = $grid;
+    $showgrid[0]["y"] -= $expand/sqrt(2);
+    $showgrid[0]["x"] -= $expand/sqrt(2);
+    $showgrid[1]["y"] += $expand/sqrt(2);
+    $showgrid[1]["x"] -= $expand/sqrt(2);
+    $showgrid[2]["y"] += $expand/sqrt(2);
+    $showgrid[2]["x"] += $expand/sqrt(2);
+    $showgrid[3]["y"] -= $expand/sqrt(2);
+    $showgrid[3]["x"] += $expand/sqrt(2);
+    
+    for($i = 0; $i < 4; ++$i)
+    {
+        $geodesy->setUTM($showgrid[$i]["x"]+$datum["x"], $showgrid[$i]["y"]+$datum["y"], $datum["zone"]);
+        $geodesy->convertTMtoLL();
+        $showgrid[$i]["lat"] = $geodesy->Lat();
+        $showgrid[$i]["lon"] = $geodesy->Long();
+    }
+
+
+    $toshow_vid = array();
+    // add / remove vehicles
+    if($enabled)
+    {
+        $query =
+            "SELECT DISTINCT data_vehicleid ".
+            "FROM geov_core.core_data ".
+            "WHERE data_time >= UNIX_TIMESTAMP()-".AUTOSHOW_DECAY." ".
+            "AND data_lat > ".$showgrid[0]["lat"]." ".
+            "AND data_lat < ".$showgrid[2]["lat"]." ".
+            "AND data_long > ".$showgrid[0]["lon"]." ".
+            "AND data_long < ".$showgrid[2]["lon"]." ".
+            "AND data_userid=".$sim_id;
+        
+        
+        $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        
+        while($row = mysql_fetch_row($result))
+        {
+            $toshow_vid[] = $row[0];
+        }
+    }
+
+//    $kml->kerr(print_r($query,true));
+    
+    // find out who is managed by the autoshow
+    $query =
+        "SELECT geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_vehicleid ".
+        "FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+        "JOIN geov_core.core_profile_vehicle ON geov_core.core_profile_vehicle.p_vehicle_profileid = geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_profileid AND  geov_core.core_profile_vehicle.p_vehicle_vehicleid = geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_vehicleid ".
+        "WHERE geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_profileid = $pid ".
+        "AND (p_vehicle_showimage = 1 OR p_vehicle_showtext = 1 OR p_vehicle_pt = 1 OR p_vehicle_line = 1 ) ".
+        "AND geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_auto = 1";
+    
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    $shown_vid = array();
+    while($row = mysql_fetch_row($result))
+    {
+        $shown_vid[] = $row[0];
+    }
+
+    $intersect_vid = array_intersect($toshow_vid, $shown_vid);
+
+    $add_vid = array_diff($toshow_vid, $intersect_vid);
+    $remove_vid = array_diff($shown_vid, $intersect_vid);
+    
+    foreach($add_vid as $vid)
+    {
+        // core
+        $query = 
+            "INSERT INTO geov_core.core_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid) ".
+            "VALUES('$pid', '$vid') ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
+
+        
+        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        // moos_opgrid
+        $query = 
+            "INSERT INTO geov_moos_opgrid.moos_opgrid_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid, p_vehicle_auto) ".
+            "VALUES('$pid', '$vid', '1') ON DUPLICATE KEY UPDATE p_vehicle_auto = '1'  ";
+        
+        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);        
+    }
+
+    foreach($remove_vid as $vid)
+    {
+        // core
+        $query =
+            "UPDATE geov_core.core_profile_vehicle ".
+            "SET p_vehicle_showimage = '0', ".
+            "    p_vehicle_showtext = '0', ".
+            "    p_vehicle_pt = '0', ".
+            "    p_vehicle_line = '0' ".
+            "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
+
+        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+        // moos_opgrid
+        $query =
+            "UPDATE geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+            "SET p_vehicle_auto = '0' ".
+            "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
+
+        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    }
+
+    if($add_vid || $remove_vid)
+    {
+        $query = "UPDATE geov_core.core_connected SET connected_reload = 1 WHERE connected_profileid=$pid";
+        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    }
+    
+
+}

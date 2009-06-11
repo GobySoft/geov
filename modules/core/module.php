@@ -20,7 +20,7 @@ $mysql_base_table =
 
 $mysql_sub_table =
     array(
-        "show" => array(
+        "module" => array(
             ),
         "vehicle" => array(
             )

@@ -25,7 +25,7 @@ class kml_writer extends xml_writer
         $kml_err->push("Document");
         $kml_err->push("Folder");
         $kml_err->element("name", "ERROR!");
-        $kml_err->element("description", $error_value);
+        $kml_err->element("description", "<![CDATA[".$error_value."]]>");
         
         $kml_err->echo_kml();
         
