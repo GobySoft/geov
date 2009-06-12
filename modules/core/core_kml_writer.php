@@ -203,7 +203,7 @@ class core_kml_writer extends kml_writer
             $this->element("scale", "0.6");
 
             $this->push("Icon");
-            $this->element("href", "http://maps.google.com/mapfiles/kml/shapes/arrow.png");
+            $this->element("href", "http://".$_SERVER["SERVER_ADDR"]."/geov/images/arrow.png");
             $this->pop();
             $this->pop();
 
