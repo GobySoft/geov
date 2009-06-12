@@ -59,7 +59,8 @@ function opgrid()
     global $pid;
     global $geodesy;
     global $sim_id;
-
+    global $pmode;
+    
     
     
     $kml->push("Document");

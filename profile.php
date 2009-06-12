@@ -1001,6 +1001,18 @@ function profile_save($profileid)
                     
                      mysql_query($query) or die(mysql_error());
                 }
+
+                $query =
+                    "SELECT p_vehicle_vehicleid ".
+                    "FROM core_profile_vehicle ".
+                    "WHERE (p_vehicle_showimage = 1 OR p_vehicle_showtext = 1 OR p_vehicle_pt = 1 OR p_vehicle_line = 1 ) ".
+                    "AND p_vehicle_profileid = '$profileid' ";
+                $result = mysql_query($query) or die(mysql_error());
+                
+                while($row = mysql_fetch_row($result))
+                {   
+                    $module_class[$mid]->add_vehicle_row($profileid, $row[0]);
+                }
             }            
         }
 
