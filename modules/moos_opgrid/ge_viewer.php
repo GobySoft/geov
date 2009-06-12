@@ -24,6 +24,7 @@ include_once("opgrid_kml_writer.php");
 include_once("../../includes/module_functions.php");
 include_once("../../third_party/gPoint.php");
 include_once("../../includes/ge_functions.php");
+include_once("../../includes/module_class.php");
 
 /************************************************************************************
  start kml output
@@ -516,12 +517,15 @@ function autoshow($enabled, $expand, $grid, $datum)
         $query =
             "SELECT DISTINCT data_vehicleid ".
             "FROM geov_core.core_data ".
+            "JOIN geov_core.core_vehicle ".
+            "ON data_vehicleid = vehicle_id ".
             "WHERE data_time >= UNIX_TIMESTAMP()-".AUTOSHOW_DECAY." ".
             "AND data_lat > ".$showgrid[0]["lat"]." ".
             "AND data_lat < ".$showgrid[2]["lat"]." ".
             "AND data_long > ".$showgrid[0]["lon"]." ".
             "AND data_long < ".$showgrid[2]["lon"]." ".
-            "AND data_userid=".$sim_id;
+            "AND data_userid=".$sim_id." ".
+            "AND vehicle_disabled = 0";
         
         
         $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
@@ -555,51 +559,58 @@ function autoshow($enabled, $expand, $grid, $datum)
 
     $add_vid = array_diff($toshow_vid, $intersect_vid);
     $remove_vid = array_diff($shown_vid, $intersect_vid);
-    
-    foreach($add_vid as $vid)
-    {
-        // core
-        $query = 
-            "INSERT INTO geov_core.core_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid) ".
-            "VALUES('$pid', '$vid') ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
 
-        
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-        // moos_opgrid
-        $query = 
-            "INSERT INTO geov_moos_opgrid.moos_opgrid_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid, p_vehicle_auto) ".
-            "VALUES('$pid', '$vid', '1') ON DUPLICATE KEY UPDATE p_vehicle_auto = '1'  ";
-        
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);        
-    }
-
-    foreach($remove_vid as $vid)
-    {
-        // core
-        $query =
-            "UPDATE geov_core.core_profile_vehicle ".
-            "SET p_vehicle_showimage = '0', ".
-            "    p_vehicle_showtext = '0', ".
-            "    p_vehicle_pt = '0', ".
-            "    p_vehicle_line = '0' ".
-            "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
-
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-
-        // moos_opgrid
-        $query =
-            "UPDATE geov_moos_opgrid.moos_opgrid_profile_vehicle ".
-            "SET p_vehicle_auto = '0' ".
-            "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
-
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-
-    }
 
     if($add_vid || $remove_vid)
     {
-        $query = "UPDATE geov_core.core_connected SET connected_reload = 1 WHERE connected_profileid=$pid";
+
+        $module_class = instantiate_modules($pid, "../../");
+        foreach($add_vid as $vid)
+        {
+            foreach($module_class as $module)
+            {
+                if($module->name != "moos_opgrid")
+                    $module->add_vehicle_row($pid, $vid);
+                else
+                {
+                    $query = 
+                        "INSERT INTO geov_moos_opgrid.moos_opgrid_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid, p_vehicle_auto) ".
+                        "VALUES('$pid', '$vid', '1') ON DUPLICATE KEY UPDATE p_vehicle_auto = '1'  ";
+                    
+                    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+                }
+                
+            }
+        }
+
+        foreach($remove_vid as $vid)
+        {
+            // core
+            $query =
+                "UPDATE geov_core.core_profile_vehicle ".
+                "SET p_vehicle_showimage = '0', ".
+                "    p_vehicle_showtext = '0', ".
+                "    p_vehicle_pt = '0', ".
+                "    p_vehicle_line = '0' ".
+                "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
+
+            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+            // moos_opgrid
+            $query =
+                "UPDATE geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+                "SET p_vehicle_auto = '0' ".
+                "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
+
+            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+        }
+
+        update_connected_vehicles($module_class, $pid, $sim_id);
+        
+        $query = "UPDATE geov_core.core_connected SET connected_reload = 1 WHERE connected_profileid='$pid'";
         mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        
     }
     
 

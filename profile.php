@@ -1094,72 +1094,9 @@ function profile_save($profileid)
     {
         $all_bound_ips[] = $ip;
     }
-
-// get all the previously bound ip addresses for this profile
-    $query =
-        "SELECT connected_ip ".
-        "FROM core_connected ".
-        "WHERE connected_profileid = $profileid";
     
-    $result = mysql_query($query) or die(mysql_error());
-    while($row = mysql_fetch_assoc($result))
-        $all_bound_ips[] = $row["connected_ip"];
+    update_connected_vehicles($module_class, $profileid, $userid, $all_bound_ips);
     
-    
-    if ($all_bound_ips)
-    {    
-        foreach($all_bound_ips as $ip)
-        {
-            // find (if exists) the connection_id for this IP
-            $last_ge_cid = mysql_get_single_value("SELECT connected_id ".
-                                                  "FROM core_connected ".
-                                                  "WHERE connected_ip = '$ip' ".
-                                                  "AND connected_client = '".GE_CLIENT_ID."'");
-        
-            foreach($module_class as $module)
-            {
-                $last_ge_cid = $module->gen_bind($profileid, $last_ge_cid, $ip, $userid);
-            }
-
-
-            // trash the old vehicle entries
-            $query =
-                "DELETE FROM  ".
-                "  core_connected_vehicle ".
-                "WHERE ".
-                "  c_vehicle_connectedid = '$last_ge_cid'";            
-            
-            mysql_query($query) or die(mysql_error());
-            
-            // add the connected_vehicle entries
-            
-            $query =
-                "SELECT p_vehicle_vehicleid ".
-                "FROM core_profile_vehicle ".
-                "WHERE p_vehicle_profileid = '$profileid'";
-
-            $result = mysql_query($query) or die(mysql_error());
-            
-            while($row = mysql_fetch_assoc($result))
-            {
-                $vehicleid = $row["p_vehicle_vehicleid"];
-                
-                if($vehicleid)
-                {
-                    
-                    $query =
-                        "INSERT INTO ".
-                        "  core_connected_vehicle".
-                        "   (c_vehicle_connectedid, ".
-                        "    c_vehicle_vehicleid) ".
-                        "VALUES ".
-                        "   ('$last_ge_cid', ".
-                        "    '$vehicleid') ";                    
-                    mysql_query($query) or die(mysql_error());
-                }            
-            }
-        }
-    }
     
 // set reload = true so all modules do a full reload
     foreach($module_class as $module)
