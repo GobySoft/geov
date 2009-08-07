@@ -1175,11 +1175,14 @@ function history()
         "ON ".
         " data_vehicleid = vehicle_id ".
         "WHERE ".
-        " data_time >= ".($st)." AND data_time < ".($et).
+        " data_time >= ".($st)." AND data_time < ".($et)." ".
         "AND data_userid = $sim_id ";
     
 
-    $num_rows = mysql_num_rows(mysql_query($query_prelim)) or $kml->kerr(mysql_error()."\n".$query_prelim);
+    $result_prelim = mysql_query($query_prelim) or $kml->kerr(mysql_error()."\n".$query_prelim);
+    
+    $num_rows = mysql_num_rows($result_prelim);
+    
     
 // based on the density of points allowed ($point_limit) set the time spacing between points
 // assuming a minimum time spacing of one second

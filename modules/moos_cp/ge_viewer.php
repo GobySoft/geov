@@ -230,6 +230,9 @@ function realtime($thistime)
 
                 foreach($pwt[$fname] as $tname => $pwt_value)
                 {
+                    if($pwt_value == 0)
+                        continue;
+                    
                     if(!isset($vlat[$tname]))
                     {        
                         list($vlat[$tname], $vlong[$tname]) = get_latlong($tname, $thistime, $allowed_skew);
@@ -243,6 +246,8 @@ function realtime($thistime)
                 
                     $angle = simple_latlong_angle($vlat[$fname],$vlong[$fname],$vlat[$tname],$vlong[$tname]);
 
+                    
+                    
                     $dx = 10*log($pwt_value)*$max_line*cos($angle);
                     $dy = 10*log($pwt_value)*$max_line*sin($angle);
 
