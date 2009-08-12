@@ -961,7 +961,7 @@ function profile_save($profileid)
      -add the needed profile_vehicle rows
     ************************************************************************************/
     if(!$profileid)
-        break;
+        return;
 
     list($profilename, $profilemode, $simulation) = findprofinfo($profileid);
 
@@ -1042,9 +1042,8 @@ function profile_save($profileid)
                 }
             }	   
         }
-    }
-
-
+    }    
+    
 // unbind ips
     if(isset($_POST["unbind"]))
     {
@@ -1107,6 +1106,7 @@ function profile_save($profileid)
     }
 
     $message .= "\nprofile ($profileid) saved: ".gmdate("r").".\n";
+
 }
 
 function header_with_message($location = "")

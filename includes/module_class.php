@@ -514,7 +514,7 @@ class Module
             }
             else if ($value["input"] == "checkbox")
             {                
-
+                
                 $new_input[$value["mysql_key"]] = (($_POST[$this->name."_".$value["mysql_key"]."all"]==1 ||
                                                     isset($_POST[$this->name."_".$value["mysql_key"]][$vehicleid])) && 
                                                    $_POST[$this->name."_".$value["mysql_key"]."all"] !=2) ? true : false;
@@ -558,8 +558,6 @@ class Module
             "p_vehicle_profileid='$profileid' ".
             "AND ".
             "p_vehicle_vehicleid='$vehicleid'";
-        
-        
         
         if ($new_input)
             mysql_query($query) or die(mysql_error());
@@ -786,15 +784,18 @@ class Module
             "INSERT INTO ".$this->db.".".$this->name."_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid) ".
             "VALUES('$profileid', '$vehicleid') ";
         
-        // add vehicle entries as they are needed
-        if($this->name == "core")
-        {
-            $query .=
-                "ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
-        }
-        else
-            $query .=
-                "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
+//         // add vehicle entries as they are needed
+//         if($this->name == "core")
+//         {
+//             $query .=
+//                 "ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
+//         }
+//         else
+//             $query .=
+//                 "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
+
+        $query .=
+            "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
         
         mysql_query($query) or die(mysql_error());
         
