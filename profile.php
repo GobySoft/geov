@@ -977,7 +977,7 @@ function profile_save($profileid)
                 {
                     foreach($module_class as $module)
                     {
-                        $module->add_vehicle_row($profileid, $vid);
+                        $module->add_vehicle_row($profileid, $vid, true);
                     }
                 }
             }

@@ -775,7 +775,7 @@ class Module
     }
 
 
-    function add_vehicle_row($profileid, $vehicleid)
+    function add_vehicle_row($profileid, $vehicleid, $new = false)
     {
         if(!$this->vtable)
             return;
@@ -784,18 +784,15 @@ class Module
             "INSERT INTO ".$this->db.".".$this->name."_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid) ".
             "VALUES('$profileid', '$vehicleid') ";
         
-//         // add vehicle entries as they are needed
-//         if($this->name == "core")
-//         {
-//             $query .=
-//                 "ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
-//         }
-//         else
-//             $query .=
-//                 "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
-
-        $query .=
-            "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
+         // add vehicle entries as they are needed
+         if($this->name == "core" && $new)
+         {
+             $query .=
+                 "ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
+         }
+         else
+             $query .=
+                 "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
         
         mysql_query($query) or die(mysql_error());
         
