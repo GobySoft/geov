@@ -510,7 +510,7 @@ function autoshow($enabled, $expand, $grid, $datum)
     }
 
 
-    $toshow_vid = array();
+    $something_to_display_vid = array();
     // add / remove vehicles
     if($enabled)
     {
@@ -532,35 +532,62 @@ function autoshow($enabled, $expand, $grid, $datum)
         
         while($row = mysql_fetch_row($result))
         {
-            $toshow_vid[] = $row[0];
+            $something_to_display_vid[] = $row[0];
         }
     }
 
 //    $kml->kerr(print_r($query,true));
     
-    // find out who is managed by the autoshow
+    $tbl_op_pv = "geov_moos_opgrid.moos_opgrid_profile_vehicle";
+    $tbl_core_pv = "geov_core.core_profile_vehicle";
+    $tbl_core_veh = "geov_core.core_vehicle";
     $query =
-        "SELECT geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_vehicleid ".
-        "FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
-        "JOIN geov_core.core_profile_vehicle ON geov_core.core_profile_vehicle.p_vehicle_profileid = geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_profileid AND  geov_core.core_profile_vehicle.p_vehicle_vehicleid = geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_vehicleid ".
-        "WHERE geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_profileid = $pid ".
-        "AND (p_vehicle_showimage = 1 OR p_vehicle_showtext = 1 OR p_vehicle_pt = 1 OR p_vehicle_line = 1 ) ".
-        "AND geov_moos_opgrid.moos_opgrid_profile_vehicle.p_vehicle_auto = 1";
+        "SELECT $tbl_op_pv.p_vehicle_vehicleid ".
+        "FROM $tbl_op_pv ".
+        "JOIN $tbl_core_pv ON $tbl_core_pv.p_vehicle_profileid = $tbl_op_pv.p_vehicle_profileid ".
+        "AND $tbl_core_pv.p_vehicle_vehicleid = $tbl_op_pv.p_vehicle_vehicleid ".
+        "WHERE $tbl_op_pv.p_vehicle_profileid = $pid ".
+        "AND (p_vehicle_showimage = 1 OR p_vehicle_showtext = 1 OR p_vehicle_pt = 1 OR p_vehicle_line = 1 ) ";
     
     $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
 
-    $shown_vid = array();
+    $on_screen_vid = array(); // on the screen
     while($row = mysql_fetch_row($result))
     {
-        $shown_vid[] = $row[0];
+        $on_screen_vid[] = $row[0];
     }
 
-    $intersect_vid = array_intersect($toshow_vid, $shown_vid);
+    $query =
+        "SELECT $tbl_core_veh.vehicle_id ".
+        "FROM geov_core.core_vehicle ".
+        "LEFT JOIN $tbl_op_pv ".
+        "ON $tbl_core_veh.vehicle_id = $tbl_op_pv.p_vehicle_vehicleid ".
+        "AND $tbl_op_pv.p_vehicle_profileid = $pid ".
+        "WHERE p_vehicle_auto = 1 OR p_vehicle_auto IS NULL";
 
-    $add_vid = array_diff($toshow_vid, $intersect_vid);
-    $remove_vid = array_diff($shown_vid, $intersect_vid);
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
 
 
+    
+    $managed_by_autoshow = array(); // managed_by_autoshow
+    while($row = mysql_fetch_row($result))
+    {
+        $managed_by_autoshow[] = $row[0];
+    }
+    
+    // should be on screen and managed by us
+    $should_be_displayed_vid = array_intersect($something_to_display_vid, $managed_by_autoshow);
+    // should not be on screen and managed by us
+    $should_not_be_displayed_vid = array_diff($managed_by_autoshow, $something_to_display_vid);
+
+    // should be on screen and isn't 
+    $add_vid = array_diff($should_be_displayed_vid, $on_screen_vid);
+    // should be off screen but is on screen
+    $remove_vid = array_intersect($should_not_be_displayed_vid, $on_screen_vid);
+
+//    $kml->kerr(print_r(array($managed_by_autoshow, $something_to_display_vid, $should_be_displayed_vid, $should_not_be_displayed_vid, $on_screen_vid, $add_vid, $remove_vid), true));
+    
+    
     if($add_vid || $remove_vid)
     {
 
@@ -579,7 +606,6 @@ function autoshow($enabled, $expand, $grid, $datum)
                     
                     mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
                 }
-                
             }
         }
 
@@ -595,15 +621,6 @@ function autoshow($enabled, $expand, $grid, $datum)
                 "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
 
             mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-
-            // moos_opgrid
-            $query =
-                "UPDATE geov_moos_opgrid.moos_opgrid_profile_vehicle ".
-                "SET p_vehicle_auto = '0' ".
-                "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
-
-            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-
         }
 
         update_connected_vehicles($module_class, $pid, $sim_id);

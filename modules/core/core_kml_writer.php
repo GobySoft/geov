@@ -182,7 +182,7 @@ class core_kml_writer extends kml_writer
         
         $this->push("Placemark", $attr);
         
-        if($name && !$update)
+        if($name)
             $this->element("name", $name);
 
 

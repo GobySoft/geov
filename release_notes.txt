@@ -6,6 +6,8 @@ features:
 - added standalone tool to produce google earth KML file from EM3000 sonar bathymetry data
 - streamlined selection of viewable vehicles in profile manager
 - GE "flies to" the area of the world with vehicles when launched
+- moos_opgrid module can now automatically show any vehicles within its bounds
+- vastly increased the selection of colors and new vehicles pick a color based off a hash of the name when added to the profile
 
 bug fixes:
 - profile.php adds vehicles to display without rebinding.

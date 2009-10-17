@@ -73,7 +73,8 @@ $veh_parameter =
             "title" => "show vehicle color",
             "mysql_key" => "p_vehicle_color",
             "input" => "select",
-            "values" => colorarray()
+            "values" => colorarray(),
+            "styles" => stylecolorarray()
             ),
         array(
             "title" => "trail decay (s)",

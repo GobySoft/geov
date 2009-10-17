@@ -4,6 +4,11 @@
    laboratory for autonomous marine sensing systems
 
    outputs visualization of NAFCON_MESSAGE target tracking vectors
+   
+   10.16.09 - added support for LAMSS_CONTACT and LAMSS_TRACK messages
+   examples:
+   TRACK_REPORT_IN: MessageType=LAMSS_TRACK,node=3,nav_x=4283,nav_y=2792,nav_hdg=132,nav_spd=1.4,nav_dep=10,time=1255712871,tgt_num=1,x=4535,y=3082,heading=114,speed=0.9
+   CONTACT_REPORT_IN:  MessageType=LAMSS_CONTACT,node=3,track=nan,state=2,xp=4254,yp=2819,nav_hdg=138.01,nav_dep=10.0,nav_spd=1.4,bearing=44.0,sigma=3.2,rate=nan,rate_sigma=nan,snr=0.0,time=1255712844,nfeat=nan,feat1=nan,feat2=nan,feat3=nan,feat4=nan,feat5=nan,collaboration_mode=OFF
   ************************************************************************************/
 
 define("GE_CLIENT_ID", 2);
@@ -187,20 +192,26 @@ function realtime($thistime)
             if ($row["data_value"] == $last_row)
                 continue;
             $last_row = $row["data_value"];
-
             
             $decay_percent = ($thistime-$row["data_time"]) / $decay;
 
-
-            $platform = token_parse($row["data_value"], "SourcePlatformId");
-
-            if(!$platform)
-                $platform = token_parse($row["data_value"], "platform_id");
+            $platform = token_parse($row["data_value"], "SourcePlatformId"); // NAFCON_MESSAGES
             
-            $t = token_parse($row["data_value"], "Timestamp");
+            if(!$platform) // ACTIVE_CONTACT
+                $platform = token_parse($row["data_value"], "platform_id");
 
-            if(!$t)
+            if(!$platform) // LAMSS_CONTACT / LAMSS_TRACK
+                $platform = token_parse($row["data_value"], "node");
+
+            
+            $t = token_parse($row["data_value"], "Timestamp"); // NAFCON_MESSAGES
+
+            if(!$t) // ACTIVE_CONTACT
                 $t = token_parse($row["data_value"], "data_time_utc_sec");
+
+            if(!$t) // LAMSS_CONTACT / LAMSS_TRACK
+                $t = token_parse($row["data_value"], "time");
+
             
             $type = token_parse($row["data_value"], "MessageType");
 
@@ -214,15 +225,16 @@ function realtime($thistime)
             }
 
             
-            if($type == "SENSOR_CONTACT")
-                display_contact($row["data_value"], $lookup_table, $decay_percent);
-            else if ($type == "SENSOR_TRACK")
-                display_track($row["data_value"], $lookup_table, $decay_percent);   
+            if($type == "SENSOR_CONTACT" || $type == "LAMSS_CONTACT")
+                display_contact($type, $row["data_value"], $lookup_table, $decay_percent);
+            else if ($type == "SENSOR_TRACK" || $type == "LAMSS_TRACK")
+                display_track($type, $row["data_value"], $lookup_table, $decay_percent);   
             else if ($type == "SENSOR_STATUS")
                 display_status($row["data_value"], $lookup_table, $decay_percent);
             else if ($type == "ACTIVE_CONTACT")
                 display_active_contact($row["data_value"], $lookup_table, $decay_percent);
 
+            
             $kml->pop();
         }
     }
@@ -299,6 +311,10 @@ function update_mysql()
         // for ACTIVE_CONTACTS
         if(!$timestamp)
             $timestamp = token_parse($row["data_value"], "data_time_utc_sec");
+
+         // for LAMSS_TRACK / LAMSS_CONTACT
+        if(!$timestamp)
+            $timestamp = token_parse($row["data_value"], "time");
         
         $query =
             "UPDATE geov_moos_nafcon_target.moos_nafcon_target_data ".
@@ -355,40 +371,80 @@ function display_status($message, $lookup, $decay_percent)
 }
 
 // display a contact message
-function display_contact($message, $lookup, $decay_percent)
+function display_contact($type, $message, $lookup, $decay_percent)
 {
     global $kml;
+            
+    switch($type)
+    {
+        case "SENSOR_CONTACT":
+            $platform = token_parse($message, "SourcePlatformId");
+            $sensor_hdg = token_parse($message, "SensorHeading");
+            $sensor_lat = token_parse($message, "SensorLatitude");
+            $sensor_lon = token_parse($message, "SensorLongitude");
+            $contact_bearing = token_parse($message, "ContactBearing");
+            break;
+            
+//   CONTACT_REPORT_IN: utm_y2lat:xp(yp)=42.4937214144074,utm_x2lon:yp(xp)=10.9555986464678,MessageType=LAMSS_CONTACT,node=3,track=nan,state=2,xp=4510,yp=2738,nav_hdg=107.47,nav_dep=10.0,nav_spd=1.4,bearing=7.3,sigma=3.5,rate=nan,rate_sigma=0.12,snr=0.0,time=1255793803,nfeat=nan,feat1=nan,feat2=nan,feat3=nan,feat4=nan,feat5=nan,collaboration_mode=OFF
+        case "LAMSS_CONTACT":
+            $platform = token_parse($message, "node");
+            $sensor_hdg = token_parse($message, "nav_hdg");
+            if(!$sensor_hdg) // PLUS version
+                $sensor_hdg = token_parse($message, "Heading");
 
-    $platform = token_parse($message, "SourcePlatformId");
-    $sensor_hdg = token_parse($message, "SensorHeading");
-    $sensor_lat = token_parse($message, "SensorLatitude");
-    $sensor_lon = token_parse($message, "SensorLongitude");
-    $contact_bearing = token_parse($message, "ContactBearing");
+            $sensor_lat = token_parse($message, "utm_y2lat:xp(yp)");
+            if(!$sensor_lat) // PLUS version
+                $sensor_lat = token_parse($message, "Sensor_Latitude");
+            $sensor_lon = token_parse($message, "utm_x2lon:yp(xp)");
+            if(!$sensor_lon) // PLUS version
+                $sensor_lon = token_parse($message, "Sensor_Longitude");
 
+            $contact_bearing = token_parse($message, "bearing") - $sensor_hdg;
+            break;
+    }
+    
     $kml->nafcon_contact_line($platform, $sensor_lat, $sensor_lon, $sensor_hdg+$contact_bearing, (1-$decay_percent));
 }
 
 // display a track message
-function display_track($message, $lookup, $decay_percent)
+function display_track($type, $message, $lookup, $decay_percent)
 {
     global $kml;
 
-    $platform = token_parse($message, "SourcePlatformId");
-    $track_number = token_parse($message, "TrackNumber");
-    $track_lat = token_parse($message, "TrackLatitude");
-    $track_lon = token_parse($message, "TrackLongitude");
-    $track_hdg = token_parse($message, "TrackHeading");
-    $track_spd = token_parse($message, "TrackSpeed");
+    switch($type)
+    {
+        case "SENSOR_TRACK":
+            $platform = token_parse($message, "SourcePlatformId");
+            $track_number = token_parse($message, "TrackNumber");
+            $track_lat = token_parse($message, "TrackLatitude");
+            $track_lon = token_parse($message, "TrackLongitude");
+            $track_hdg = token_parse($message, "TrackHeading");
+            $track_spd = token_parse($message, "TrackSpeed");
+            break;
 
-//    $kml->nafcon_track_line($platform, $track_lat, $track_lon, $track_hdg, $track_spd, (1-$decay_percent));
+            //   TRACK_REPORT_IN: MessageType=LAMSS_TRACK,node=3,nav_x=4283,nav_y=2792,nav_hdg=132,nav_spd=1.4,nav_dep=10,time=1255712871,tgt_num=1,x=4535,y=3082,heading=114,speed=0.9
+        case "LAMSS_TRACK":
+            $platform = token_parse($message, "node");
+            $track_number = token_parse($message, "tgt_num");            
+            $track_lat = token_parse($message, "utm_y2lat:x(y)");
+            if(!$track_lat)
+                $track_lat = token_parse($message, "track_lat");
+            $track_lon = token_parse($message, "utm_x2lon:y(x)");
+            if(!$track_lon)
+                $track_lon = token_parse($message, "track_lon");
+
+            $track_hdg = token_parse($message, "heading");
+            $track_spd = token_parse($message, "speed");
+            break;
+    }
+
     $kml->nafcon_track_pt($platform, $track_lat, $track_lon, $track_hdg, $track_spd, (1-$decay_percent));
-
 
 }
 
 
 // display an active contact message
-function display_active_contact($message, $lookup, $decay_percent)
+function display_active_contact($type, $message, $lookup, $decay_percent)
 {
     global $kml;    
     

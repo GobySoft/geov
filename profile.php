@@ -73,9 +73,7 @@ $profileid = (isset($_POST['profile_id_rt']) || isset($_POST['profile_id_pb']) |
  define classes 
 ************************************************************************************/
 
-
 $module_class = instantiate_modules($profileid);
-
 
 /************************************************************************************
  do stuff (pre html actions)
@@ -997,10 +995,13 @@ function profile_save($profileid)
                         "INSERT INTO core_profile_module ".
                         " (p_module_profileid, p_module_moduleid) ".
                         "VALUES ".
-                        " ('$profileid', '$mid')";                    
+                        " ('$profileid', '$mid')";
                     
                      mysql_query($query) or die(mysql_error());
 
+                     $module_class = instantiate_modules($profileid);
+                     
+                     
                      $query =
                          "SELECT p_vehicle_vehicleid ".
                          "FROM core_profile_vehicle ".
@@ -1009,10 +1010,8 @@ function profile_save($profileid)
                      $result = mysql_query($query) or die(mysql_error());
                      
                      while($row = mysql_fetch_row($result))
-                     {   
                          $module_class[$mid]->add_vehicle_row($profileid, $row[0]);
-                     }
-
+                     
                 }
                 
             }            

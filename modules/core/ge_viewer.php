@@ -566,22 +566,6 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
             
 
             $kml->pop();
-            
-
-            $query =
-                "UPDATE ".
-                "  core_connected_vehicle ".
-                "SET ".
-                " c_vehicle_lastlat = '$veh_lat[$ilast]', ".
-                " c_vehicle_lastlong = '$veh_lon[$ilast]', ".
-                " c_vehicle_lastdepth = '$veh_depth[$ilast]' ".
-                "WHERE ".
-                " c_vehicle_connectedid = '$cid' ".
-                "AND ".
-                " c_vehicle_vehicleid = '$vid'";
-
-            
-            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
 	}
 	      	      
         // if the user has asked to "show points"
@@ -785,7 +769,7 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
     // we have rows to add
     if($add_rows)
     {
-
+        
         while($ra = mysql_fetch_assoc($res_add))
 	{
             $veh_time[] = $ra[data_time];
@@ -800,13 +784,15 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         // update largest data id used
         $m = max($veh_id);
         $new_maxdid = ($m > $new_maxdid) ? $m : $new_maxdid;
-     	      
+        
         $ilast = count($veh_id)-1;
-
+        
+        update_lastdid(max($veh_id), $cid, $vid);
+        
         $kml->push("Change");
 
         //$snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $stime - $veh_time[$ilast]);
-        $snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $veh_time[$ilast], $veh_lat[$ilast], $veh_lon[$ilast]);
+        $snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $stime - $veh_time[$ilast], $veh_lat[$ilast], $veh_lon[$ilast]);
 
         $kml->push_folder("", "f".$vid, true, $snippet);
         $kml->pop();
@@ -818,19 +804,11 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         if($vshow['line'])
 	{
 
-            $query =
-                "SELECT c_vehicle_lastlat, c_vehicle_lastlong, c_vehicle_lastdepth ".
-                "FROM core_connected_vehicle ".
-                "WHERE c_vehicle_connectedid = '".$cid."' ".
-                "AND c_vehicle_vehicleid = '".$vid."'";
+            list($last_time, $last_lat, $last_lon, $last_hdg, $last_spd, $last_depth) = pull_lastinfo($cid, $vid);
 
-                        
-            $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-            $row = mysql_fetch_row($result);
-
-            $veh_lat[-1] = $row[0];
-            $veh_lon[-1] = $row[1];
-            $veh_depth[-1] = $row[2];
+            $veh_lat[-1] = $last_lat;
+            $veh_lon[-1] = $last_lon;
+            $veh_depth[-1] = $last_depth;
 
 
             $kml->push_folder($vname."-lines",
@@ -849,20 +827,6 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
             
 
             $kml->pop();
-            
-            $query =
-                "UPDATE ".
-                "  core_connected_vehicle ".
-                "SET ".
-                " c_vehicle_lastlat = '$veh_lat[$ilast]', ".
-                " c_vehicle_lastlong = '$veh_lon[$ilast]', ".
-                " c_vehicle_lastdepth = '$veh_depth[$ilast]' ".
-                "WHERE ".
-                " c_vehicle_connectedid = '$cid' ".
-                "AND ".
-                " c_vehicle_vehicleid = '$vid'";
-
-            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
 	}   	      
 
         if($vshow['pt'])
@@ -908,7 +872,7 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
 
         if($vshow['text'])
 	{
-            $kml->veh_name($vname,
+            $kml->veh_name($vname." | ".geov_timestr($stime - $veh_time[$ilast]),
                            $veh_lat[$ilast], 
                            $veh_lon[$ilast],
                            "",
@@ -928,52 +892,31 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
     // we have no rows to add, so simply update the counter
     else
     {
-        // too slow...go through and make this faster
+        list($last_time, $last_lat, $last_lon, $last_hdg, $last_spd, $last_depth) = pull_lastinfo($cid, $vid);
+        
+        $snippet = ($last_time) ? hsdsnip(head2poshead($last_hdg), $last_spd, $last_depth, $stime - $last_time, $last_lat, $last_lon) : NO_DATA;
+        
+        $kml->push("Change");
+        $kml->push_folder("", "f".$vid, true, $snippet);
+        $kml->pop();    
 
-        
-        /*
-        $bad = false;
-        $query =
-            "SELECT ".
-            "  data_time, ".
-            "  data_id, ".
-            "  data_lat, ".
-            "  data_long, ".
-            "  data_heading, ".
-            "  data_speed, ".
-            "  data_depth ".
-            "FROM ".
-            "  core_data ".
-            "WHERE ".
-            "  data_time=(SELECT MAX(data_time) ".
-            "FROM ".
-            "  core_data ".
-            "WHERE ".
-            "  data_vehicleid = ".$vid." )";
-        
-        /*    "AND ".
-            "  data_time < '".$stime."') ";        
-        */
-                
-        /*
-        $result = mysql_query($query) or $bad = true;
+        if($vshow['text'])
+	{
+            $kml->veh_name($vname." | ".geov_timestr($stime - $last_time),
+                           $last_lat,
+                           $last_lon,
+                           "",
+                           "n".$vid,
+                           true, 
+                           $vscale, 
+                           $vloa, 
+                           $last_hdg,
+                           $last_depth,
+                           $snippet);	         
+	}
 
-        
-        if(!$bad)
-            $row = mysql_fetch_assoc($result);
-	      
-        if ($bad || !$row)
-            $snippet = NO_DATA;
-        else
-            $snippet = hsdsnip(head2poshead($row[data_heading]), $row[data_speed], $row[data_depth], $stime - $row[data_time]);
-	      
-        kml_change_begin();
-        kml_folder_begin("", "f".$vid, true, $snippet);
-        kml_folder_end();
-        kml_change_end();
-        */
+        $kml->pop();        
     }
-
 
     if($del_rows)
     {
@@ -1108,11 +1051,7 @@ function realtime_lookat($stime)
 
 function hsdsnip($hdg, $spd, $depth, $t, $lat, $lon)
 {
- //   return "h:&nbsp;".$hdg."&deg;&nbsp;|&nbsp;s:&nbsp;".$spd."&nbsp;m&#47;s&nbsp;|&nbsp;d:&nbsp;".$depth."&nbsp;m&nbsp;<br>report&nbsp;age:&nbsp;".sec2str($t);    
-    
-    return sprintf("%0.1f&deg;, %0.2f m&#47;s, %0.1f m<br />%s<br/>%0.5fN,%0.5fE", $hdg, $spd, $depth, geov_datestr($t), $lat, $lon);
-    
-    //return "h:&nbsp;".$hdg."&deg;&nbsp;|&nbsp;s:&nbsp;".$spd."&nbsp;m&#47;s&nbsp;|&nbsp;d:&nbsp;".$depth."&nbsp;m&nbsp;<br>last report: ".gmdate("m.d.y | H:i:s", $t);	      
+    return sprintf("%0.1f&deg;, %0.2f m&#47;s, %0.1f m, %s<br/>%0.5f N, %0.5f E", $hdg, $spd, $depth, geov_timestr($t), $lat, $lon);
 }
 
 
@@ -1344,5 +1283,36 @@ function history()
     mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
         
 }
+
+function update_lastdid($id, $cid, $vid)
+{
+    global $kml;
+    
+    $query =
+        "UPDATE core_connected_vehicle ".
+        "SET c_vehicle_lastdid='$id' ".
+        "WHERE c_vehicle_vehicleid='$vid' ".
+        "AND c_vehicle_connectedid='$cid'";
+
+    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+}
+
+function pull_lastinfo($cid, $vid)
+{
+    global $kml;
+    $query =
+        "SELECT data_time, data_lat, data_long, data_heading, data_speed, data_depth ".
+        "FROM core_data ".
+        "JOIN core_connected_vehicle ON data_id = c_vehicle_lastdid ".
+        "WHERE c_vehicle_vehicleid='$vid' ".
+        "AND c_vehicle_connectedid='$cid'";
+    
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $row = mysql_fetch_assoc($result);
+
+    return array($row["data_time"], $row["data_lat"], $row["data_long"], $row["data_heading"], $row["data_speed"], $row["data_depth"]);
+
+}
+
 
 ?>

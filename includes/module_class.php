@@ -474,14 +474,15 @@ class Module
             }
             else
             {               
-                    
+
                 $this->profile_row(isset($value["title"]) ? $value["title"] : "no title",
                                    "",
                                    $result,
                                    $value["mysql_key"],
                                    $value["input"],
                                    false,
-                                   isset($value["values"]) ? $value["values"] : array());
+                                   isset($value["values"]) ? $value["values"] : array(),
+                                   isset($value["styles"]) ? $value["styles"] : array());
             }
             
             
@@ -779,21 +780,28 @@ class Module
     {
         if(!$this->vtable)
             return;
-        
+
+        if($this->name == "core")
+        {
+            $color_insert1 = ", p_vehicle_color";
+            $color = $this->find_closest_color_from_id($vehicleid);
+            $color_insert2 = ",'$color'";
+        }        
+            
         $query =
-            "INSERT INTO ".$this->db.".".$this->name."_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid) ".
-            "VALUES('$profileid', '$vehicleid') ";
+            "INSERT INTO ".$this->db.".".$this->name."_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid".$color_insert1.") ".
+            "VALUES('$profileid', '$vehicleid'".$color_insert2.") ";
         
          // add vehicle entries as they are needed
-         if($this->name == "core" && $new)
-         {
-             $query .=
-                 "ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
-         }
-         else
-             $query .=
-                 "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
-        
+        if($this->name == "core" && $new)
+        {
+            $query .=
+                "ON DUPLICATE KEY UPDATE p_vehicle_showimage = DEFAULT, p_vehicle_showtext = DEFAULT, p_vehicle_pt = DEFAULT, p_vehicle_line = DEFAULT";
+        }
+        else
+            $query .=
+                "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
+
         mysql_query($query) or die(mysql_error());
         
         
@@ -808,7 +816,7 @@ class Module
 //          "checkbox" - display checkboxes
 //          "text" - display text boxes
 //          "select" - display select option
-    function profile_row($title, $alltitle, $result, $key, $input, $newsort, $sarray = array())
+    function profile_row($title, $alltitle, $result, $key, $input, $newsort, $sarray = array(), $style_array = array())
     {
         global $html;
         
@@ -874,8 +882,15 @@ class Module
                 $html->element("option", "(no action)", array("value"=>""));
 
                 foreach($sarray as $skey => $value)
-                    $html->element("option", $skey, array("value"=>$value));
-
+                {
+                    $attributes = array("value"=>$value);
+                    
+                    if($style_array[$skey])
+                        $attributes["style"]=$style_array[$skey];
+                    
+                    $html->element("option", $skey, $attributes);
+                }
+                    
                 $html->pop(); //</select>
                 $html->pop(); //</td>	  
                 break;
@@ -948,6 +963,9 @@ class Module
                         
                         if($row[$key]==$value)
                             $attributes["selected"]="selected";
+
+                        if($style_array[$skey])
+                            $attributes["style"]=$style_array[$skey];
                         
                         $html->element("option", $skey, $attributes);
                     }
@@ -1174,7 +1192,15 @@ class Module
 
     }
     
-    
+
+    function find_closest_color_from_id($vehicleid)
+    {
+        $name = mysql_get_single_value("SELECT vehicle_name FROM geov_core.core_vehicle WHERE vehicle_id = '$vehicleid'");
+        
+        $colorarray = array_values(colorarray());
+        $index = (crc32($name) % count($colorarray));
+        return $colorarray[$index];
+    }
 }
 
 ?>
