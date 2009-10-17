@@ -8,6 +8,7 @@ features:
 - GE "flies to" the area of the world with vehicles when launched
 - moos_opgrid module can now automatically show any vehicles within its bounds
 - vastly increased the selection of colors and new vehicles pick a color based off a hash of the name when added to the profile
+- time since last message now shown
 
 bug fixes:
 - profile.php adds vehicles to display without rebinding.

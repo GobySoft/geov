@@ -85,7 +85,12 @@ function opgrid()
     $datum["lat"] = (double)$row["profile_datumlat"];
     $datum["lon"] = (double)$row["profile_datumlon"];
 
-        
+    if(!$opbox_xy && !$opbox_latlon)
+    {
+        $opbox_xy  = mysql_get_single_value("SELECT data_value FROM geov_moos_opgrid.moos_opgrid_data WHERE data_variable='OP_BOX' AND data_userid = $sim_id ORDER BY data_id DESC LIMIT 1");
+    }
+
+    
     if(!$datum["lat"] && !$datum["lon"])
     {
         $datum["lat"] = mysql_get_single_value("SELECT data_value FROM geov_moos_opgrid.moos_opgrid_data WHERE data_variable='LAT_ORIGIN' AND data_userid = $sim_id ORDER BY data_id DESC LIMIT 1");

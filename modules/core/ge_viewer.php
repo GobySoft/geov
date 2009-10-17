@@ -438,6 +438,7 @@ function realtime($stime, $ltime, $reload)
 
     if($reload)
     {
+        $kml->push_folder("debug", "", "", false, "", 0);
         $kml->push_folder("last script execution time:",
                           "lastexec",
                           false,
@@ -445,9 +446,9 @@ function realtime($stime, $ltime, $reload)
         $kml->pop();
         
         //for debugging purposes
-        $kml->push_folder("last refresh: ".geov_datestr(time()));
+        $kml->push_folder("last viewer refresh:", "", false, geov_datestr(time()));
         $kml->pop();
-     
+        $kml->pop();     
         $kml->pop(); // </Document>
     }
     else
@@ -527,7 +528,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
         $new_maxdid = ($m > $new_maxdid) ? $m : $new_maxdid;
 	      
         $ilast = count($veh_id)-1;
-
+        
         //$snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $stime - $veh_time[$ilast]);
         $snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $veh_time[$ilast], $veh_lat[$ilast], $veh_lon[$ilast]);
 
@@ -630,7 +631,8 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
 
                 
         mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-        
+
+        update_lastdid(max($veh_id), $cid, $vid);
         unset($veh_time, $veh_lat, $veh_lon, $veh_hdg, $veh_spd, $veh_depth, $veh_id);	      
     }
 
@@ -787,8 +789,6 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         
         $ilast = count($veh_id)-1;
         
-        update_lastdid(max($veh_id), $cid, $vid);
-        
         $kml->push("Change");
 
         //$snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $stime - $veh_time[$ilast]);
@@ -803,9 +803,9 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         
         if($vshow['line'])
 	{
-
             list($last_time, $last_lat, $last_lon, $last_hdg, $last_spd, $last_depth) = pull_lastinfo($cid, $vid);
-
+            
+            
             $veh_lat[-1] = $last_lat;
             $veh_lon[-1] = $last_lon;
             $veh_depth[-1] = $last_depth;
@@ -886,6 +886,7 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
 	}
         $kml->pop(); // </Change>
 
+        update_lastdid(max($veh_id), $cid, $vid);
         unset($veh_time, $veh_lat, $veh_lon, $veh_hdg, $veh_spd, $veh_depth, $veh_id);	      
     }
 

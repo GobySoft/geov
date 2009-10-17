@@ -61,7 +61,7 @@ class kml_writer extends xml_writer
     }
 
     // begin a new folder
-    function push_folder($name, $id="", $update=false, $snippet="")
+    function push_folder($name, $id="", $update=false, $snippet="", $open=1)
     {
         if (!$update)
         {
@@ -72,7 +72,7 @@ class kml_writer extends xml_writer
             
             $this->push("Folder", $attr);
             $this->element("name", $name);
-            $this->element("open", "1");
+            $this->element("open", $open);
         }
         else if($update)
         {
@@ -81,7 +81,7 @@ class kml_writer extends xml_writer
 
         
         if($snippet)
-            $this->element("description", "<![CDATA[".$snippet."]]>");
+            $this->element("snippet", "<![CDATA[".$snippet."]]>");
     }    
 
     function list_style($color, $id)
