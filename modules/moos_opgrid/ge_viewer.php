@@ -61,8 +61,7 @@ function opgrid()
     global $geodesy;
     global $sim_id;
     global $pmode;
-    
-    
+    global $preload;
     
     $kml->push("Document");
     
@@ -76,20 +75,19 @@ function opgrid()
 
     $row = mysql_fetch_assoc($result);
 
-    $displayop = $row["profile_displayop"]; //bool
-    $opbox_xy = $row["profile_opbox"]; //x1,y1:x2,y2
-    $opbox_latlon = $row["profile_opbox_latlong"]; //lat1,lon1:lat2,lon2
+    $displayop = $row["profile_displayop"]; // bool
+    $opbox_xy = $row["profile_opbox"]; // x1,y1:x2,y2
+    $opbox_latlon = $row["profile_opbox_latlong"]; // lat1,lon1:lat2,lon2
 
-    $markers = $row["profile_markers"]; //x1,y1,name:x2,y2,name
-
+    $markers = $row["profile_markers"]; // x1,y1,name:x2,y2,name
+    
     $datum["lat"] = (double)$row["profile_datumlat"];
     $datum["lon"] = (double)$row["profile_datumlon"];
 
     if(!$opbox_xy && !$opbox_latlon)
     {
-        $opbox_xy  = mysql_get_single_value("SELECT data_value FROM geov_moos_opgrid.moos_opgrid_data WHERE data_variable='OP_BOX' AND data_userid = $sim_id ORDER BY data_id DESC LIMIT 1");
+        $opbox_xy = mysql_get_single_value("SELECT data_value FROM geov_moos_opgrid.moos_opgrid_data WHERE data_variable='OP_BOX' AND data_userid = $sim_id ORDER BY data_id DESC LIMIT 1");
     }
-
     
     if(!$datum["lat"] && !$datum["lon"])
     {
@@ -107,9 +105,6 @@ function opgrid()
     $datum["y"] = $geodesy->N();
     $datum["zone"] = $geodesy->Z();
 
-    // do markers
-
-    plot_markers($markers, $datum);
     
     //echo "datum"."<br>";
     //echo $geodesy->printLatLong()."<br>";
@@ -119,50 +114,182 @@ function opgrid()
     $gridspacing = $row["profile_xyspacing"]; // meters
     $sub_gridspacing = $row["profile_xyspacing_sub"]; // meters
     
-    if(!($displayop && ($opbox_xy || $opbox_latlon)))
-       return true;
-
-    $opbox = array();
-    // split opbox string in array
-    if($opbox_xy)
+    if($displayop && ($opbox_xy || $opbox_latlon))
     {
-        $opbox_partial = explode(":", $opbox_xy);
-        foreach ($opbox_partial as $key=>$value)
-        {
-            $xypair = explode(",", $opbox_partial[$key]);
 
-            $opbox[$key]["x"] = $xypair[0];
-            $opbox[$key]["y"] = $xypair[1];
+        $opbox = array();
+        // split opbox string in array
+        if($opbox_xy)
+        {
+            $opbox_partial = explode(":", $opbox_xy);
+            foreach ($opbox_partial as $key=>$value)
+            {
+                $xypair = explode(",", $opbox_partial[$key]);
+
+                $opbox[$key]["x"] = $xypair[0];
+                $opbox[$key]["y"] = $xypair[1];
             
-            $geodesy->setUTM($xypair[0]+$datum["x"], $xypair[1]+$datum["y"], $datum["zone"]);
+                $geodesy->setUTM($xypair[0]+$datum["x"], $xypair[1]+$datum["y"], $datum["zone"]);
+                $geodesy->convertTMtoLL();
+            
+                $opbox[$key]["lat"] = $geodesy->Lat();
+                $opbox[$key]["lon"] = $geodesy->Long();
+            }
+        }
+        else if($opbox_latlon)
+        {
+            $opbox_partial = explode(":", $opbox_latlon);
+            foreach ($opbox_partial as $key=>$value)
+            {
+                $latlonpair = explode(",", $opbox_partial[$key]);
+            
+                $opbox[$key]["lat"] = $latlonpair[0];
+                $opbox[$key]["lon"] = $latlonpair[1];
+
+                $geodesy->setLongLat($latlonpair[1], $latlonpair[0], $datum["zone"]);
+                $geodesy->convertLLtoTM();
+
+                $opbox[$key]["x"] = $geodesy->E() - $datum["x"];
+                $opbox[$key]["y"] = $geodesy->N() - $datum["y"];
+            }
+        }
+        else
+        {
+            $kml->kerr("no opbox specified!");        
+        }    
+
+        define_styles();        
+    
+        foreach($opbox as $value)
+        {
+            $kml->insert($value["lon"].",".$value["lat"].",0");
+        }
+        $kml->insert($opbox[0]["lon"].",".$opbox[0]["lat"].",0");
+    
+        $kml->pop();
+        $kml->pop();
+        $kml->pop();
+
+        $kml->pop(); //folder
+
+
+        // 0 = lower left, 1 = upper left, 2 = upper right, 3 = lower right
+        $min["x"] = INF;
+        $min["y"] = INF;
+        $max["x"] = -INF;
+        $max["y"] = -INF;
+
+        foreach($opbox as $value)
+        {
+            if($value["x"] > $max["x"])
+                $max["x"] = $value["x"];
+            if($value["y"] > $max["y"])
+                $max["y"] = $value["y"];
+        
+            if($value["x"] < $min["x"])
+                $min["x"] = $value["x"];
+            if($value["y"] < $min["y"])
+                $min["y"] = $value["y"];
+        }
+    
+        $grid[0]["y"] = $min["y"];
+        $grid[0]["x"] = $min["x"];
+        $grid[1]["y"] = $max["y"];
+        $grid[1]["x"] = $min["x"];
+        $grid[2]["y"] = $max["y"];
+        $grid[2]["x"] = $max["x"];
+        $grid[3]["y"] = $min["y"];
+        $grid[3]["x"] = $max["x"];
+
+
+        // autoshow!    
+        if($pmode == "realtime")
+            autoshow($autoshow, $autoshowexpand, $grid, $datum);
+    
+        if($displaygrid)
+        {
+    
+            $kml->push("Folder", array("id" => "moos_opgrid_grid_folder"));
+            $kml->element("name", "operation local grid");
+        
+            $kml->push("Style");
+            $kml->push("ListStyle", array("id" => "moos_opgrid_gridliststyle"));
+            $kml->element("listItemType", "checkHideChildren");
+            $kml->pop();
+            $kml->pop();
+            
+            $kml->push("Placemark", array("id"=>"moos_opgrid_grid_placemark"));
+            $kml->element("styleUrl", "#moos_opgrid_gridstyle");
+            $kml->push("LineString");
+            $kml->element("tessellate", "1");
+            $kml->push("coordinates");
+    
+            foreach($grid as $value)
+            {
+                $geodesy->setUTM($value["x"] + $datum["x"], $value["y"] + $datum["y"], $datum["zone"]);
+                $geodesy->convertTMtoLL();
+                $kml->insert($geodesy->Long().",".$geodesy->Lat().",0");
+            }
+
+            $geodesy->setUTM($grid[0]["x"] + $datum["x"], $grid[0]["y"] + $datum["y"], $datum["zone"]);
             $geodesy->convertTMtoLL();
-            
-            $opbox[$key]["lat"] = $geodesy->Lat();
-            $opbox[$key]["lon"] = $geodesy->Long();
+            $kml->insert($geodesy->Long().",".$geodesy->Lat().",0");
+    
+            $kml->pop();
+            $kml->pop();
+            $kml->pop();
+
+    
+            //echo "max"."<br>";
+            //echo "N: ".$max["y"]." E: ".$max["x"]."<br>";
+            //echo $geodesy->printLatLong()."<br>";
+            //echo $geodesy->printUTM()."<br><br>";
+
+    
+            //$kml->kerr(print_r($max,true));
+
+            if($sub_gridspacing)
+            {
+                make_grid($sub_gridspacing, $min, $max, $datum, "moos_opgrid_sub_gridstyle", false);
+            }
+        
+
+            if($gridspacing)
+            {
+                make_grid($gridspacing, $min, $max, $datum, "moos_opgrid_gridstyle", true);
+            }
+    
+
+    
+            $kml->pop(); //folder
         }
     }
-    else if($opbox_latlon)
-    {
-        $opbox_partial = explode(":", $opbox_latlon);
-        foreach ($opbox_partial as $key=>$value)
-        {
-            $latlonpair = explode(",", $opbox_partial[$key]);
-            
-            $opbox[$key]["lat"] = $latlonpair[0];
-            $opbox[$key]["lon"] = $latlonpair[1];
+    
 
-            $geodesy->setLongLat($latlonpair[1], $latlonpair[0], $datum["zone"]);
-            $geodesy->convertLLtoTM();
+    // do markers
+    plot_markers($markers, $datum);
+    
+    $is_new_viewobject = read_viewobjects();
+    plot_viewpolygon($datum);
+    plot_viewpoint($datum);
 
-            $opbox[$key]["x"] = $geodesy->E() - $datum["x"];
-            $opbox[$key]["y"] = $geodesy->N() - $datum["y"];
-        }
-    }
-    else
-    {
-        $kml->kerr("no opbox specified!");        
-    }    
+    if($is_new_viewobject)
+        $preload = true;
+    
 
+    
+    $query =
+        "UPDATE geov_moos_opgrid.moos_opgrid_connected ".
+        "SET connected_reload = 0 ".
+        "WHERE connected_id = $cid";
+    
+    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+}
+
+function define_styles()
+{
+    global $kml;
     
     //define styles
     $kml->push("Style", array("id"=>"moos_opgrid_opboxstyle"));
@@ -237,120 +364,8 @@ function opgrid()
 //    echo "</pre>";
 //    die();
 
-    
-    foreach($opbox as $value)
-    {
-        $kml->insert($value["lon"].",".$value["lat"].",0");
-    }
-    $kml->insert($opbox[0]["lon"].",".$opbox[0]["lat"].",0");
-    
-    $kml->pop();
-    $kml->pop();
-    $kml->pop();
-
-    $kml->pop(); //folder
-
-
-    // 0 = lower left, 1 = upper left, 2 = upper right, 3 = lower right
-    $min["x"] = inf;
-    $min["y"] = inf;
-    $max["x"] = -inf;
-    $max["y"] = -inf;
-
-    foreach($opbox as $value)
-    {
-        if($value["x"] > $max["x"])
-            $max["x"] = $value["x"];
-        if($value["y"] > $max["y"])
-            $max["y"] = $value["y"];
-        
-        if($value["x"] < $min["x"])
-            $min["x"] = $value["x"];
-        if($value["y"] < $min["y"])
-            $min["y"] = $value["y"];
-    }
-    
-    $grid[0]["y"] = $min["y"];
-    $grid[0]["x"] = $min["x"];
-    $grid[1]["y"] = $max["y"];
-    $grid[1]["x"] = $min["x"];
-    $grid[2]["y"] = $max["y"];
-    $grid[2]["x"] = $max["x"];
-    $grid[3]["y"] = $min["y"];
-    $grid[3]["x"] = $max["x"];
-
-
-    // autoshow!    
-    if($pmode == "realtime")
-        autoshow($autoshow, $autoshowexpand, $grid, $datum);
-
-    if(!$displaygrid)
-        return true;
-        
-    $kml->push("Folder", array("id" => "moos_opgrid_grid_folder"));
-    $kml->element("name", "operation local grid");
-    
-    $kml->push("Style");
-    $kml->push("ListStyle", array("id" => "moos_opgrid_gridliststyle"));
-    $kml->element("listItemType", "checkHideChildren");
-    $kml->pop();
-    $kml->pop();
-    
-    $kml->push("Placemark", array("id"=>"moos_opgrid_grid_placemark"));
-    $kml->element("styleUrl", "#moos_opgrid_gridstyle");
-    $kml->push("LineString");
-    $kml->element("tessellate", "1");
-    $kml->push("coordinates");
-    
-    foreach($grid as $value)
-    {
-        $geodesy->setUTM($value["x"] + $datum["x"], $value["y"] + $datum["y"], $datum["zone"]);
-        $geodesy->convertTMtoLL();
-        $kml->insert($geodesy->Long().",".$geodesy->Lat().",0");
-    }
-
-    $geodesy->setUTM($grid[0]["x"] + $datum["x"], $grid[0]["y"] + $datum["y"], $datum["zone"]);
-    $geodesy->convertTMtoLL();
-    $kml->insert($geodesy->Long().",".$geodesy->Lat().",0");
-    
-    $kml->pop();
-    $kml->pop();
-    $kml->pop();
-
-    
-    //echo "max"."<br>";
-    //echo "N: ".$max["y"]." E: ".$max["x"]."<br>";
-    //echo $geodesy->printLatLong()."<br>";
-    //echo $geodesy->printUTM()."<br><br>";
-
-    
-    //$kml->kerr(print_r($max,true));
-
-    if($sub_gridspacing)
-    {
-        make_grid($sub_gridspacing, $min, $max, $datum, "moos_opgrid_sub_gridstyle", false);
-    }
-        
-
-    if($gridspacing)
-    {
-        make_grid($gridspacing, $min, $max, $datum, "moos_opgrid_gridstyle", true);
-    }
-
-
-    
-    $kml->pop(); //folder
-    
-        
-    
-    $query =
-        "UPDATE geov_moos_opgrid.moos_opgrid_connected ".
-        "SET connected_reload = 0 ".
-        "WHERE connected_id = $cid";
-    
-    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-
 }
+
 
 function make_grid($gridspacing, $min, $max, $datum, $style, $label)
 {
@@ -395,12 +410,6 @@ function make_grid($gridspacing, $min, $max, $datum, $style, $label)
         $kml->pop();
         $kml->pop();
 
-        if($label)
-        {
-            $kml->kml_opbox_label((int)$i, $lat_0, $lon_0, "ffffffff", "moos_opgrid_grid_label_xmin_".$j);
-            $kml->kml_opbox_label((int)$i, $lat_1, $lon_1, "ffffffff", "moos_opgrid_grid_label_xmax_".$j);
-        }
-
     }
         
     for($j = (ceil($min["y"]/$gridspacing)*$gridspacing); $j <= (floor($max["y"]/$gridspacing)*$gridspacing); $j += $gridspacing)
@@ -442,22 +451,35 @@ function make_grid($gridspacing, $min, $max, $datum, $style, $label)
         $kml->pop();
         $kml->pop();
 
-        if($label)
-        {
-            $kml->kml_opbox_label((int)$j, $lat_0, $lon_0, "ffffffff", "moos_opgrid_grid_label_ymin_".$j);
-            $kml->kml_opbox_label((int)$j, $lat_1, $lon_1, "ffffffff", "moos_opgrid_grid_label_ymax_".$j);            
-        }
-
-
     }
+
+
+    if($label)
+    {
+        for($i = (ceil($min["x"]/$gridspacing)*$gridspacing); $i <= (floor($max["x"]/$gridspacing)*$gridspacing); $i += $gridspacing)
+        {            
+            for($j = (ceil($min["y"]/$gridspacing)*$gridspacing); $j <= (floor($max["y"]/$gridspacing)*$gridspacing); $j += $gridspacing)
+            {
+                $geodesy->setUTM($i+$datum["x"], $j + $datum["y"], $datum["zone"]);
+                $geodesy->convertTMtoLL();
+                $lat = $geodesy->Lat();
+                $lon = $geodesy->Long();
+                
+                $kml->kml_opbox_label((int)$i.",".(int)$j, $lat, $lon, "ccffffff", "moos_opgrid_grid_label_".$i."_".$j);
+            }
+        }
+    }
+    
 }
 
 function plot_markers($markers, $datum)
 {
     global $kml;
     global $geodesy;
-    
-    
+
+    $kml->push("Folder", array("id" => "markers_folder"));
+    $kml->element("name", "markers");
+
     $markers_split = array();
     // split markers string in array
 
@@ -467,9 +489,7 @@ function plot_markers($markers, $datum)
         $markers_partial = explode(":", $markers);
         foreach ($markers_partial as $key=>$value)
         {
-            $xyname = explode(",", $markers_partial[$key]);
-
- 
+            $xyname = explode(",", $markers_partial[$key]); 
 
             $geodesy->setUTM((int)$xyname[0]+(int)$datum["x"], (int)$xyname[1] + (int)$datum["y"], $datum["zone"]);
             $geodesy->convertTMtoLL();
@@ -480,9 +500,219 @@ function plot_markers($markers, $datum)
         }
     }
     
+    $kml->pop(); // Folder
     
 }
 
+function read_viewobjects()
+{
+    global $sim_id;
+    global $pid;
+    
+    $query =
+        "SELECT data_value ".
+        "FROM geov_moos_opgrid.moos_opgrid_data ".
+        "WHERE data_variable='VIEW_POLYGON' ".
+        "AND data_userid = $sim_id ".
+        "ORDER BY data_id DESC LIMIT 10";
+
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    $is_new_viewobject = false;
+
+    $new_viewpolygons = array();
+    while($row = mysql_fetch_row($result))
+    {
+        $new_viewpolygon = $row[0];
+        // active,true:label,unicorn_DEPLOY:edge_size,0:vertex_size,0:3000,4200:3710,4910:3850,4770:3140,4060:3000,4200:3000,4200:3000,4200:3000,4200:3000,4200
+
+        // 0 -> active,true
+        // 1 -> label,unicorn_DEPLOY
+        $pairs = explode(":", $new_viewpolygon);
+
+        // 0 -> label
+        // 1 -> unicorn_DEPLOY
+        $label = explode(",", $pairs[1]);
+
+        // 0 -> unicorn
+        // 1 -> DEPLOY
+        $v_name = explode("_", $label[1]);
+        
+        $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name[0]."'");
+
+        if(!array_key_exists($vid, $new_viewpolygons))
+            $new_viewpolygons[$vid] = $new_viewpolygon;        
+    }
+
+    foreach ($new_viewpolygons as $vid=>$new_viewpolygon)
+    {    
+
+        $old_viewpolygon = mysql_get_single_value("SELECT p_vehicle_viewpolygon FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_vehicleid = '$vid'  AND p_vehicle_profileid = '$pid'");
+
+        if($old_viewpolygon != $new_viewpolygon)
+        {
+            $query =
+                "UPDATE geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+                "SET p_vehicle_viewpolygon = '$new_viewpolygon' ".
+                "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
+
+            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+            $is_new_viewobject = true;
+        }
+    }
+    
+
+
+    $query =
+        "SELECT data_value ".
+        "FROM geov_moos_opgrid.moos_opgrid_data ".
+        "WHERE data_variable='VIEW_POINT' ".
+        "AND data_userid = $sim_id ".
+        "ORDER BY data_id DESC LIMIT 20";
+    
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    $new_viewpoints = array();
+    while($row = mysql_fetch_row($result))
+    {
+        $new_viewpoint = $row[0];
+        //std::string: active,true:label,unicorn_waypoint:type,waypoint:source,unicorn_waypoint:3849,4766
+
+        // 0 -> active,true
+        // 1 -> label,unicorn_waypoint
+        $pairs = explode(":", $new_viewpoint);
+
+        // 0 -> label
+        // 1 -> unicorn_waypoint
+        $label = explode(",", $pairs[1]);
+
+        // 0 -> unicorn
+        // 1 -> waypoint
+        $v_name = explode("_", $label[1]);
+        
+        if(sizeof($v_name) == 2 && $v_name[1] != "")
+        {            
+            $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name[0]."'");
+
+            if(!array_key_exists($vid, $new_viewpoints))
+                $new_viewpoints[$vid] = $new_viewpoint;
+        }
+    }
+
+    foreach ($new_viewpoints as $vid=>$new_viewpoint)
+    {    
+        $old_viewpoint = mysql_get_single_value("SELECT p_vehicle_viewpoint FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_vehicleid = '$vid'  AND p_vehicle_profileid = '$pid'");
+        
+        if($old_viewpoint != $new_viewpoint)
+        {
+            $query =
+                "UPDATE geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+                "SET p_vehicle_viewpoint = '$new_viewpoint' ".
+                "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
+            
+            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+            
+            $is_new_viewobject = true;
+        }
+    }
+
+    return $is_new_viewobject;
+}
+
+
+function plot_viewpoint($datum)
+{
+    global $kml;
+    global $pid;
+    global $geodesy;
+    
+    $kml->push("Folder", array("id" => "viewpoint_folder"));
+    $kml->element("name", "viewpoints");
+    
+    $query = "SELECT p_vehicle_viewpoint FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_profileid = '$pid'";
+    
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    
+    while($row = mysql_fetch_row($result))
+    {
+        //std::string: active,true:label,unicorn_waypoint:type,waypoint:source,unicorn_waypoint:3849,4766
+
+        // 0 -> active,true
+        // 1 -> label,unicorn_DEPLOY
+        $pairs = explode(":", $row[0]);
+
+        // 0 -> label
+        // 1 -> unicorn_DEPLOY
+        if(sizeof($pairs) >= 5)
+        {
+            $label = explode(",", $pairs[1]);
+            
+            $xypair = explode(",", $pairs[4]);
+                
+            $geodesy->setUTM((int)$xypair[0]+(int)$datum["x"], (int)$xypair[1] + (int)$datum["y"], $datum["zone"]);
+            $geodesy->convertTMtoLL();
+            $lat = $geodesy->Lat();
+            $lon = $geodesy->Long();
+
+            $kml->kml_marker($lat, $lon, $label[1]);
+        }
+    }
+    
+    $kml->pop(); // Folder
+}
+
+function plot_viewpolygon($datum)
+{
+    
+    global $kml;
+    global $pid;
+    global $geodesy;
+    
+    $kml->push("Folder", array("id" => "viewpolygon_folder"));
+    $kml->element("name", "viewpolygons");
+    
+    $query = "SELECT p_vehicle_viewpolygon FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_profileid = '$pid'";
+    
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    while($row = mysql_fetch_row($result))
+    {
+        // active,true:label,unicorn_DEPLOY:edge_size,0:vertex_size,0:3000,4200:3710,4910:3850,4770:3140,4060:3000,4200:3000,4200:3000,4200:3000,4200:3000,4200
+
+        // 0 -> active,true
+        // 1 -> label,unicorn_waypoint
+        $pairs = explode(":", $row[0]);
+        
+        if(sizeof($pairs) >= 2)
+        {
+            
+            
+            // 0 -> label
+            // 1 -> unicorn_waypoint
+            $label = explode(",", $pairs[1]);        
+            
+            $lat = array();
+            $lon = array();
+            for($i = 4; $i < sizeof($pairs); ++$i)
+            {
+                $xypair = explode(",", $pairs[$i]);
+                
+                $geodesy->setUTM((int)$xypair[0]+(int)$datum["x"], (int)$xypair[1] + (int)$datum["y"], $datum["zone"]);
+                $geodesy->convertTMtoLL();
+                $lat[] = $geodesy->Lat();
+                $lon[] = $geodesy->Long();
+            }        
+            $kml->kml_viewplot($lat, $lon, $label[1]);
+        }
+        
+    }
+    
+
+    $kml->pop(); // Folder
+
+}
 
 
 function autoshow($enabled, $expand, $grid, $datum)
@@ -590,8 +820,7 @@ function autoshow($enabled, $expand, $grid, $datum)
     // should be off screen but is on screen
     $remove_vid = array_intersect($should_not_be_displayed_vid, $on_screen_vid);
 
-//    $kml->kerr(print_r(array($managed_by_autoshow, $something_to_display_vid, $should_be_displayed_vid, $should_not_be_displayed_vid, $on_screen_vid, $add_vid, $remove_vid), true));
-    
+    //$kml->kerr(print_r(array($managed_by_autoshow, $something_to_display_vid, $should_be_displayed_vid, $should_not_be_displayed_vid, $on_screen_vid, $add_vid, $remove_vid), true));    
     
     if($add_vid || $remove_vid)
     {
@@ -602,7 +831,7 @@ function autoshow($enabled, $expand, $grid, $datum)
             foreach($module_class as $module)
             {
                 if($module->name != "moos_opgrid")
-                    $module->add_vehicle_row($pid, $vid);
+                    $module->add_vehicle_row($pid, $vid, true);
                 else
                 {
                     $query = 

@@ -106,9 +106,9 @@ switch($pmode)
         $row = mysql_fetch_assoc($result);
 	  
         //0 = stopped, 1=playing, 2=paused, 3=step
-        $status = $row[connected_playback];
-        $count = $row[connected_playbackcount];
-        $step = $row[connected_playbackstep];
+        $status = $row['connected_playback'];
+        $count = $row['connected_playbackcount'];
+        $step = $row['connected_playbackstep'];
 	  
         $query =
             "SELECT ".
@@ -122,9 +122,9 @@ switch($pmode)
         $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
         $row = mysql_fetch_assoc($result);
 	  
-        $rate = $row[profile_rate];
-        $st = $row[profile_starttime];
-        $et = $row[profile_endtime];
+        $rate = $row['profile_rate'];
+        $st = $row['profile_starttime'];
+        $et = $row['profile_endtime'];
 	  
         // playback (re)start
         if ($status == 0)
@@ -242,17 +242,14 @@ function realtime($stime, $ltime, $reload)
 {
     global $pid;
     global $cid;
-    global $thistime;
-    global $lasttime;
     global $new_maxdid;
     global $script_begin;
     global $kml;
     global $sim_id;
     
     
-    if($lasttime < 0)
+    if($ltime < 0)
         $reload = true;
-
     
     
     // find the maximum data id used for the entire fetch so that any ids that are greater next time are displayed
@@ -312,9 +309,9 @@ function realtime($stime, $ltime, $reload)
             $query =
                 "SELECT data_id ".
                 "FROM core_data ".
-                "WHERE data_time >= ".($stime-$row[p_vehicle_duration])." ".
+                "WHERE data_time >= ".($stime-$row['p_vehicle_duration'])." ".
                 "AND data_time < ".($stime)." ".
-                "AND data_vehicleid = '".$row[p_vehicle_vehicleid]."' ".
+                "AND data_vehicleid = '".$row['p_vehicle_vehicleid']."' ".
                 "AND data_userid = $sim_id ".
                 "LIMIT 1";
                         
@@ -324,11 +321,9 @@ function realtime($stime, $ltime, $reload)
             
             if($num_rows)
 	    {
-                $onscreen[$row[p_vehicle_vehicleid]] = true;
+                $onscreen[$row['p_vehicle_vehicleid']] = true;
                 
-                $reload = (!$row[c_vehicle_onscreen]) ? true : $reload;
-
-                
+                $reload = (!$row['c_vehicle_onscreen']) ? true : $reload;
 	    }
 	}
     }
@@ -350,7 +345,7 @@ function realtime($stime, $ltime, $reload)
         $kml->push("NetworkLinkControl");
 
         $kml->push("Update");
-        $kml->element("targetHref", "http://".$_SERVER[SERVER_ADDR]."/geov/modules/core/ge_viewer.php");  // <kml><NetworkLinkControl><Update>
+        $kml->element("targetHref", "http://".$_SERVER['SERVER_ADDR']."/geov/modules/core/ge_viewer.php");  // <kml><NetworkLinkControl><Update>
 
         $kml->push("Change");
 
@@ -366,29 +361,27 @@ function realtime($stime, $ltime, $reload)
 
     while ($rv = mysql_fetch_assoc($result_vehicle))
     {
-        $vid = $rv[p_vehicle_vehicleid];
-        $vname = $rv[vehicle_name];
-        $vtype = $rv[vehicle_type];
+        $vid = $rv['p_vehicle_vehicleid'];
+        $vname = $rv['vehicle_name'];
+        $vtype = $rv['vehicle_type'];
 
-        $vshow['image'] = $rv[p_vehicle_showimage];
-        $vshow['text'] = $rv[p_vehicle_showtext];
-        $vshow['pt'] = $rv[p_vehicle_pt];
-        $vshow['line'] = $rv[p_vehicle_line];
+        $vshow['image'] = $rv['p_vehicle_showimage'];
+        $vshow['text'] = $rv['p_vehicle_showtext'];
+        $vshow['pt'] = $rv['p_vehicle_pt'];
+        $vshow['line'] = $rv['p_vehicle_line'];
         
-        $vscale = $rv[p_vehicle_scale];
-        $vloa = $rv[vehicle_loa];
-        $vbeam = $rv[vehicle_beam];
+        $vscale = $rv['p_vehicle_scale'];
+        $vloa = $rv['vehicle_loa'];
+        $vbeam = $rv['vehicle_beam'];
 
         // for fixed size
         if($rv["profile_fixedicon"])
             $vscale = sqrt($rv["profile_fixediconsize"]/($vbeam*$vloa));
         
         
-        $dur = $rv[p_vehicle_duration];     
-        $vcolor = $rv[p_vehicle_color];
-        $vimage = "http://".$_SERVER[SERVER_ADDR]."/".$rv[vehicle_image];
-        $vonscreen = $onscreen[$rv[p_vehicle_vehicleid]];
-        
+        $dur = $rv['p_vehicle_duration'];     
+        $vcolor = $rv['p_vehicle_color'];
+        $vimage = "http://".$_SERVER['SERVER_ADDR']."/".$rv['vehicle_image'];
         
         $styleid = "linestyle".$vid;
 
@@ -411,6 +404,8 @@ function realtime($stime, $ltime, $reload)
         // we are not reloading (do an incremental update)
         else
 	{
+            $vonscreen = $onscreen[$rv['p_vehicle_vehicleid']];
+            
             realtime_incremental($vid,
                                  $styleid,
                                  $vname,
@@ -482,8 +477,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
     global $pid;
     global $cid;
     global $kml;
-    global $sim_id;
-    
+    global $sim_id;    
     
     $query_data =
         "SELECT ".
@@ -502,10 +496,9 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
         "  data_time < ".($stime)." ".
         "AND ".
         "  data_vehicleid = '".$vid."' ".
-        "AND data_userid = $sim_id ";
-    
-//        "ORDER BY ".
-//        "  data_time ASC";
+        "AND data_userid = $sim_id ".
+        "ORDER BY ".
+        "  data_time ASC";
 
     $data = mysql_query($query_data) or $kml->kerr(mysql_error()."\n".$query_data);
     $num_rows = mysql_num_rows($data);
@@ -514,22 +507,29 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
     {
         while($row_data = mysql_fetch_assoc($data))
 	{
-            $veh_time[] = $row_data[data_time];
-            $veh_lat[] = $row_data[data_lat];
-            $veh_lon[] = $row_data[data_long]; 
-            $veh_hdg[] = $row_data[data_heading];
-            $veh_spd[] = $row_data[data_speed];
-            $veh_depth[] = $row_data[data_depth];
-            $veh_id[] = $row_data[data_id];
+            $veh_time[] = $row_data['data_time'];
+            $veh_lat[] = $row_data['data_lat'];
+            $veh_lon[] = $row_data['data_long']; 
+            $veh_hdg[] = $row_data['data_heading'];
+            $veh_spd[] = $row_data['data_speed'];
+            $veh_depth[] = $row_data['data_depth'];
+            $veh_id[] = $row_data['data_id'];
 	}
 
         // update largest data id used
         $m = max($veh_id);
         $new_maxdid = ($m > $new_maxdid) ? $m : $new_maxdid;
-	      
+
+        //update the maximum data id used
+        $query =
+            "UPDATE core_connected ".
+            "SET connected_lastdataid = '$new_maxdid' ".
+            "WHERE connected_id = '$cid'";
+        
+        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        
         $ilast = count($veh_id)-1;
         
-        //$snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $stime - $veh_time[$ilast]);
         $snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $veh_time[$ilast], $veh_lat[$ilast], $veh_lon[$ilast]);
 
         // open the folder for the vehicle
@@ -550,7 +550,8 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
             // from the last update
             $veh_lat[-1] = $veh_lat[0];
             $veh_lon[-1] = $veh_lon[0];
-
+            $veh_depth[-1] = $veh_depth[0];
+            
             $kml->push_folder($vname."-lines",
                               "linef".$vid);
 	  
@@ -632,7 +633,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
                 
         mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
 
-        update_lastdid(max($veh_id), $cid, $vid);
+        update_lastdid($veh_id[$ilast], $cid, $vid);
         unset($veh_time, $veh_lat, $veh_lon, $veh_hdg, $veh_spd, $veh_depth, $veh_id);	      
     }
 
@@ -735,6 +736,23 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
 
 
     //just update the changes from the last update, but fill in ones we missed that have larger data ids
+    /* $query_add = */
+    /*     "SELECT ". */
+    /*     "  data_time, ". */
+    /*     "  data_id, ". */
+    /*     "  data_lat, ". */
+    /*     "  data_long, ". */
+    /*     "  data_heading, ". */
+    /*     "  data_speed, ". */
+    /*     "  data_depth ". */
+    /*     "FROM ". */
+    /*     "  core_data ". */
+    /*     "WHERE ". */
+    /*     "  (data_time >= ".($ltime)." OR (data_id > $last_did AND data_time >= ".($stime-$dur).")) ". */
+    /*     "   AND data_time < ".($stime)." AND data_vehicleid = '".$vid."' ". */
+    /*     "AND data_userid = $sim_id "; */
+
+
     $query_add =
         "SELECT ".
         "  data_time, ".
@@ -747,26 +765,56 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         "FROM ".
         "  core_data ".
         "WHERE ".
-        "  (data_time >= ".($ltime)." OR (data_id > $last_did AND data_time >= ".($stime-$dur).")) ".
-        "   AND data_time < ".($stime)." AND data_vehicleid = '".$vid."' ".
-        "AND data_userid = $sim_id ";
+        "   (data_time >= ".($ltime)." OR (data_time >= (SELECT min(data_time) FROM core_data WHERE data_id > $last_did AND data_time >= ".($stime-$dur)." AND data_vehicleid = '".$vid."' AND data_userid = $sim_id))) ".
+        "  AND data_time < ".($stime)." AND data_vehicleid = '".$vid."' ".
+        "AND data_userid = $sim_id ".
+        "ORDER BY ".
+        "  data_time ASC";
+
     
+    $res_add = mysql_query($query_add) or $kml->kerr(mysql_error()."\n".$query_add);
+    $add_rows = mysql_num_rows($res_add);    
     
     //remove the values we've seen, but make sure we've displayed it
     $query_del =
         "SELECT data_id ".
         "FROM core_data ".
         "WHERE data_time >= ".($ltime-$dur)." ".
-        "AND data_time < ".($stime-$dur)." ".
+        "AND (data_time < ".($stime-$dur)." ".
+        " OR data_time >= (SELECT min(data_time) FROM core_data WHERE data_id > $last_did AND data_time >= ".($stime-$dur)." AND data_vehicleid = '".$vid."' AND data_userid = $sim_id)) ".
         "AND data_id <= $last_did ".
         "AND data_vehicleid = '".$vid."'".
-        "AND data_userid = $sim_id ";
-    
-    $res_add = mysql_query($query_add) or $kml->kerr(mysql_error()."\n".$query_add);
-    $res_del = mysql_query($query_del) or $kml->kerr(mysql_error()."\n".$query_del);
+        "AND data_userid = $sim_id ".
+        "ORDER BY ".
+        "  data_time ASC";
 
-    $add_rows = mysql_num_rows($res_add);
+    
+    $res_del = mysql_query($query_del) or $kml->kerr(mysql_error()."\n".$query_del);
     $del_rows = mysql_num_rows($res_del);
+
+
+        if($del_rows)
+    {
+
+        while($rd = mysql_fetch_assoc($res_del))
+	{
+            $veh_id[] = $rd['data_id'];
+	}
+        
+        $kml->push("Delete");
+        if($vshow['line'])
+	{
+            $kml->trail_rm("line", $veh_id);
+	}
+        
+        if($vshow['pt'])
+	{
+            $kml->trail_rm("pt", $veh_id);
+	}   
+        $kml->pop();
+        
+        unset($veh_id);	      
+    }	  
 
     // we have rows to add
     if($add_rows)
@@ -774,13 +822,13 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         
         while($ra = mysql_fetch_assoc($res_add))
 	{
-            $veh_time[] = $ra[data_time];
-            $veh_lat[] = $ra[data_lat];
-            $veh_lon[] = $ra[data_long]; 
-            $veh_hdg[] = $ra[data_heading];
-            $veh_spd[] = $ra[data_speed];
-            $veh_depth[] = $ra[data_depth];
-            $veh_id[] = $ra[data_id];
+            $veh_time[] = $ra['data_time'];
+            $veh_lat[] = $ra['data_lat'];
+            $veh_lon[] = $ra['data_long']; 
+            $veh_hdg[] = $ra['data_heading'];
+            $veh_spd[] = $ra['data_speed'];
+            $veh_depth[] = $ra['data_depth'];
+            $veh_id[] = $ra['data_id'];
 	}
 
         // update largest data id used
@@ -791,7 +839,6 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         
         $kml->push("Change");
 
-        //$snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $stime - $veh_time[$ilast]);
         $snippet = hsdsnip(head2poshead($veh_hdg[$ilast]), $veh_spd[$ilast], $veh_depth[$ilast], $stime - $veh_time[$ilast], $veh_lat[$ilast], $veh_lon[$ilast]);
 
         $kml->push_folder("", "f".$vid, true, $snippet);
@@ -803,16 +850,29 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         
         if($vshow['line'])
 	{
-            list($last_time, $last_lat, $last_lon, $last_hdg, $last_spd, $last_depth) = pull_lastinfo($cid, $vid);
             
-            
-            $veh_lat[-1] = $last_lat;
-            $veh_lon[-1] = $last_lon;
-            $veh_depth[-1] = $last_depth;
+            $query_last_point =
+                "SELECT ".
+                "  data_lat, ".
+                "  data_long, ".
+                "  data_depth ".
+                "FROM ".
+                "  core_data ".
+                "WHERE ".
+                " data_time < ".$veh_time[0]." AND data_vehicleid = '".$vid."' ".
+                "AND data_userid = $sim_id ORDER BY data_time DESC LIMIT 1";
 
+            
+            $res_last_point = mysql_query($query_last_point) or $kml->kerr(mysql_error()."\n".$query_last_point);
+            $row_last_point = mysql_fetch_assoc($res_last_point);
+            
+            $veh_lat[-1] = $row_last_point['data_lat'];
+            $veh_lon[-1] = $row_last_point['data_long'];
+            $veh_depth[-1] = $row_last_point['data_depth'];
 
             $kml->push_folder($vname."-lines",
                               "linef".$vid, true);
+
 
             $kml->trail("line",
                         "",
@@ -886,7 +946,7 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
 	}
         $kml->pop(); // </Change>
 
-        update_lastdid(max($veh_id), $cid, $vid);
+        update_lastdid($veh_id[$ilast], $cid, $vid);
         unset($veh_time, $veh_lat, $veh_lon, $veh_hdg, $veh_spd, $veh_depth, $veh_id);	      
     }
 
@@ -919,28 +979,6 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         $kml->pop();        
     }
 
-    if($del_rows)
-    {
-
-        while($rd = mysql_fetch_assoc($res_del))
-	{
-            $veh_id[] = $rd[data_id];
-	}
-        
-        $kml->push("Delete");
-        if($vshow['line'])
-	{
-            $kml->trail_rm("line", $veh_id);
-	}
-        
-        if($vshow['pt'])
-	{
-            $kml->trail_rm("pt", $veh_id);
-	}   
-        $kml->pop();
-        
-        unset($veh_id);	      
-    }	  
 
 
 
@@ -1055,7 +1093,6 @@ function hsdsnip($hdg, $spd, $depth, $t, $lat, $lon)
     return sprintf("%0.1f&deg;, %0.2f m&#47;s, %0.1f m, %s<br/>%0.5f N, %0.5f E", $hdg, $spd, $depth, geov_timestr($t), $lat, $lon);
 }
 
-
 /************************************************************************************
  HISTORY
 
@@ -1159,12 +1196,12 @@ function history()
     
     while($rv = mysql_fetch_assoc($result_vehicle))
     {
-        $vid = $rv[p_vehicle_vehicleid];
-        $vname = $rv[vehicle_name];
-        $vtype = $rv[vehicle_type];
-        $vshow['pt'] = $rv[p_vehicle_pt];
-        $vshow['line'] = $rv[p_vehicle_line];
-        $vcolor = $rv[p_vehicle_color];
+        $vid = $rv['p_vehicle_vehicleid'];
+        $vname = $rv['vehicle_name'];
+        $vtype = $rv['vehicle_type'];
+        $vshow['pt'] = $rv['p_vehicle_pt'];
+        $vshow['line'] = $rv['p_vehicle_line'];
+        $vcolor = $rv['p_vehicle_color'];
 
         // remember google earth uses AABBGGRR not RRGGBB for colors
         $vcolor_red = hexdec(substr($vcolor, 6, 2));
@@ -1307,6 +1344,7 @@ function pull_lastinfo($cid, $vid)
         "JOIN core_connected_vehicle ON data_id = c_vehicle_lastdid ".
         "WHERE c_vehicle_vehicleid='$vid' ".
         "AND c_vehicle_connectedid='$cid'";
+    
     
     $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
     $row = mysql_fetch_assoc($result);

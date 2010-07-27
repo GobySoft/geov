@@ -127,6 +127,7 @@ function token_parse($haystack, $needle, $pair_delimiter = ",", $key_delimiter =
 
 function instantiate_modules($profileid, $path = "./")
 {
+    global $html;
     $module = array("-1" => "modules/core/module.php");
 
     if($profileid)

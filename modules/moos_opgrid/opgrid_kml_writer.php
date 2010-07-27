@@ -32,14 +32,14 @@ class opgrid_kml_writer extends kml_writer
         $this->pop();
     }
 
-    function kml_marker($lat, $lon, $name)
+    function kml_marker($lat, $lon, $name, $color = "AAc22eff")
     {
         $this->push("Placemark");
         $this->element("name", $name);
         $this->push("Style");
         $this->push("IconStyle");
 
-        $this->element("color", "AAc22eff");
+        $this->element("color", $color);
         
         $this->element("scale", "0.4");
         
@@ -54,6 +54,28 @@ class opgrid_kml_writer extends kml_writer
         
         $this->pop();
         $this->pop();
+    }
+
+
+    function kml_viewplot($lat, $lon, $name)
+    {
+        $this->push("Placemark", array("id"=>"viewplot_".$name));
+        $this->element("name", $name);
+        
+        $this->push("LineString");
+        $this->element("tessellate", "1");
+        $this->push("coordinates");
+
+        for($i = 0; $i < sizeof($lat); ++$i)
+        {
+            $this->insert($lon[$i].",".$lat[$i].",0");
+        }
+        
+        $this->pop();
+        $this->pop();
+        $this->pop();
+        //$this->kml_opbox_label($name, $lat[0], $lon[0], "ffffffff", "viewplot_label_".$name);
+        
     }
     
 }

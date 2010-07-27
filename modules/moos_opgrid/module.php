@@ -37,22 +37,22 @@ $gen_parameter =
             "input" => "checkbox",
             ),
         array(
-            "title" => "operation region specified in x/y. <br /> format like bhv_opregion: x1,y1:x2,y2:x3,y3:x4,y4",
+            "title" => "operation region specified in x/y. <br /> format like bhv_opregion: x1,y1:x2,y2:x3,y3:x4,y4. <br />(leave blank to use OP_BOX MOOS variable instead.)",
             "mysql_key" => "profile_opbox",
             "input" => "text",
             ),
         array(
-            "title" => "operation region specifed in lat/lon <br />(if x/y specified, that takes priority). <br /> format: lat1,lon1:lat2,lon2:lat3,lon3",
+            "title" => "operation region specifed in lat/lon <br />(if x/y specified, that takes priority). <br /> format: lat1,lon1:lat2,lon2:lat3,lon3 <br />(leave blank to use OP_BOX MOOS variable instead.)",
             "mysql_key" => "profile_opbox_latlong",
             "input" => "text",
             ),
         array(
-            "title" => "datum latitude (decimal degrees) <br />(leave blank for auto)",
+            "title" => "datum latitude (decimal degrees) <br />(value 0 means use LAT_ORIGIN)",
             "mysql_key" => "profile_datumlat",
             "input" => "text",
             ),
         array(
-            "title" => "datum longitude (decimal degrees) <br />(leave blank for auto)",
+            "title" => "datum longitude (decimal degrees) <br />(value 0 means use LONG_ORIGIN)",
             "mysql_key" => "profile_datumlon",
             "input" => "text",
             ),

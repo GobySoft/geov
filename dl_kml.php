@@ -1,6 +1,6 @@
 <?php
 header("Content-Type: application/kml; charset=utf8");
-header('Content-disposition: attachment; filename=geov_core_'.str_replace(".","-",$_SERVER[SERVER_NAME]).'.kml');
+header('Content-disposition: attachment; filename=geov_core_'.str_replace(".","-",$_SERVER['SERVER_NAME']).'.kml');
 
 require_once("includes/kml_writer.php");
 $kml = new kml_writer();
