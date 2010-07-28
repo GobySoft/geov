@@ -325,6 +325,11 @@ function realtime($stime, $ltime, $reload)
                 
                 $reload = (!$row['c_vehicle_onscreen']) ? true : $reload;
 	    }
+            else
+            {
+                $onscreen[$row['p_vehicle_vehicleid']] = false;
+            }
+            
 	}
     }
     @mysql_data_seek($result_vehicle, 0);

@@ -61,7 +61,7 @@ class geov_html_writer extends html_writer
         $this->empty_element("input", array("type"=>"hidden", "name"=>$name, "value"=>$value));    
     }
 
-    function input_checkbox($name, $checked, $value=1)
+    function input_checkbox($name, $checked, $value=1, $size=30)
     {
         if($checked)
             $this->empty_element("input", array("type"=>"checkbox", "name"=>$name, "value"=>$value, "size"=>$size, "checked"=>$checked));

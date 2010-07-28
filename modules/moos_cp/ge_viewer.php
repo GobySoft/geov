@@ -153,6 +153,8 @@ function realtime($thistime)
         "AND p_vehicle_disp_cp = 1";
     
     $result = kml_mysql_query($query);
+
+    $friend_name = array();
     
     while($row = mysql_fetch_assoc($result))
     {

@@ -710,7 +710,7 @@ else
     $html->p_jump("vehicle_table");
     
     
-    if(!$noshow && mysql_get_num_rows("SELECT vehicle_id FROM core_vehicle LIMIT 1"))
+    if(mysql_get_num_rows("SELECT vehicle_id FROM core_vehicle LIMIT 1"))
     {
         
         // show table for vehicles

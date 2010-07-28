@@ -169,7 +169,7 @@ class Module
             mysql_query($query) or die(mysql_error());
         }
         
-}
+    }
     
 
     
@@ -450,13 +450,13 @@ class Module
         foreach($this->vtable as $value)
         {
             //disregard certain items for certain modes
-            if($profilemode == "realtime" && $value["realtime"] == "false")
+            if($profilemode == "realtime" && array_key_exists("realtime", $value) && $value["realtime"] == "false")
                 continue;
-            
-            if($profilemode == "playback" && $value["playback"] == "false")
+                
+            if($profilemode == "playback" && array_key_exists("playback", $value) && $value["playback"] == "false")
                 continue;
-                        
-            if($profilemode == "history" && $value["history"] == "false")
+                
+            if($profilemode == "history" && array_key_exists("history", $value) && $value["history"] == "false")
                 continue;
             
                 
@@ -580,13 +580,13 @@ class Module
         foreach($this->gtable as $value)
         {
             //disregard certain items for certain modes
-            if($profilemode == "realtime" && $value["realtime"] == "false")
+            if($profilemode == "realtime" && array_key_exists("realtime", $value) && $value["realtime"] == "false")
                 continue;
             
-            if($profilemode == "playback" && $value["playback"] == "false")
+            if($profilemode == "playback" && array_key_exists("playback", $value) && $value["playback"] == "false")
                 continue;
                         
-            if($profilemode == "history" && $value["history"] == "false")
+            if($profilemode == "history" && array_key_exists("history", $value) && $value["history"] == "false")
                 continue;
 
             if($i)
@@ -631,13 +631,13 @@ class Module
         foreach($this->gtable as $value)
         {
             //disregard certain items for certain modes
-            if($profilemode == "realtime" && $value["realtime"] == "false")
+            if($profilemode == "realtime" && array_key_exists("realtime", $value) && $value["realtime"] == "false")
                 continue;
             
-            if($profilemode == "playback" && $value["playback"] == "false")
+            if($profilemode == "playback" && array_key_exists("playback", $value) && $value["playback"] == "false")
                 continue;
                         
-            if($profilemode == "history" && $value["history"] == "false")
+            if($profilemode == "history" && array_key_exists("history", $value) && $value["history"] == "false")
                 continue;
 
             $html->push("tr");
@@ -690,22 +690,22 @@ class Module
             foreach($this->gtable as $value)
             {
                 //disregard certain items for certain modes
-                if($profilemode == "realtime" && $value["realtime"] == "false")
+                if($profilemode == "realtime" && array_key_exists("realtime", $value) && $value["realtime"] == "false")
                     continue;
                 
-                if($profilemode == "playback" && $value["playback"] == "false")
+                if($profilemode == "playback" && array_key_exists("playback", $value) && $value["playback"] == "false")
                     continue;
                 
-                if($profilemode == "history" && $value["history"] == "false")
+                if($profilemode == "history" && array_key_exists("history", $value) && $value["history"] == "false")
                     continue;
-
+                
 
                 switch($value["input"])
                 {
                     case "checkbox":
                         $save_value[$value["mysql_key"]] = (isset($_POST[$this->name."_".$value["mysql_key"]]))
                             ? 1 : 0;
-                    break;
+                        break;
                     
                     case "time":
                         $save_value[$value["mysql_key"]] = $this->tselect2unix( $_POST[$this->name."_".$value["mysql_key"]]);
@@ -731,7 +731,7 @@ class Module
                 case "radio":
                     $save_value[$value["mysql_key"]] = (isset($_POST[$this->name."_".$value["mysql_key"]])) 
                         ? $_POST[$this->name."_".$value["mysql_key"]] : 0;
-                break;
+                    break;
 
                 default:
                     break;
@@ -792,7 +792,7 @@ class Module
             "INSERT INTO ".$this->db.".".$this->name."_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid".$color_insert1.") ".
             "VALUES('$profileid', '$vehicleid'".$color_insert2.") ";
         
-         // add vehicle entries as they are needed
+        // add vehicle entries as they are needed
         if($this->name == "core" && $new)
         {
             $query .=
@@ -946,10 +946,10 @@ class Module
                 case "text":
                     $value = ($row[$key] != null) ? $row[$key] : "";
                 
-                $html->push("td", array("class"=>$td_class));
-                $html->empty_element("input", array("type"=>"text", "name"=>$modulename.$key."[".$row['vehicle_id']."]", "size"=>"5", "value"=>$value));
-                $html->pop(); // </td>
-                break;
+                    $html->push("td", array("class"=>$td_class));
+                    $html->empty_element("input", array("type"=>"text", "name"=>$modulename.$key."[".$row['vehicle_id']."]", "size"=>"5", "value"=>$value));
+                    $html->pop(); // </td>
+                    break;
                 
                 case "select":
                     $html->push("td", array("class"=>$td_class));
