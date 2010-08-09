@@ -10,7 +10,8 @@ define("GE_CLIENT_ID", 2);
 
 // temporal lifetime of autoshow targets
 define("AUTOSHOW_DECAY", 600);
-
+define("POLY_EXPIRE", 7200);
+define("POINT_EXPIRE", 1200);
 
 /************************************************************************************
  connections
@@ -264,18 +265,23 @@ function opgrid()
             $kml->pop(); //folder
         }
     }
-    
 
-    // do markers
-    plot_markers($markers, $datum);
     
-    $is_new_viewobject = read_viewobjects();
-    plot_viewpolygon($datum);
-    plot_viewpoint($datum);
-
-    if($is_new_viewobject)
-        $preload = true;
-    
+    if($pmode == "realtime")
+    {
+        // do markers
+        plot_markers($markers, $datum);
+        
+        $is_new_viewobject = read_viewobjects();
+        plot_viewpolygon($datum);
+        plot_viewpoint($datum);
+        
+        if($is_new_viewobject)
+        {
+            $preload = true;
+        }
+    }
+        
 
     
     $query =
@@ -514,8 +520,9 @@ function read_viewobjects()
         "FROM geov_moos_opgrid.moos_opgrid_data ".
         "WHERE data_variable='VIEW_POLYGON' ".
         "AND data_userid = $sim_id ".
+        "AND data_time >= UNIX_TIMESTAMP()-".POLY_EXPIRE." ".
         "ORDER BY data_id DESC LIMIT 10";
-
+    
     $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
 
     $is_new_viewobject = false;
@@ -534,21 +541,33 @@ function read_viewobjects()
         // 1 -> unicorn_DEPLOY
         $label = explode(",", $pairs[1]);
 
-        // 0 -> unicorn
+        // 0 -> oex_harpo
         // 1 -> DEPLOY
-        $v_name = explode("_", $label[1]);
+        $v_name = substr($label[1], 0, strrpos($label[1], "_"));        
         
-        $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name[0]."'");
+        $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name."'");
 
         if(!array_key_exists($vid, $new_viewpolygons))
             $new_viewpolygons[$vid] = $new_viewpolygon;        
     }
 
+    $query =
+        "SELECT p_vehicle_vehicleid FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+        "WHERE p_vehicle_profileid = '$pid'";
+
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    while($row = mysql_fetch_row($result))
+    {
+        if(!array_key_exists($row[0], $new_viewpolygons))
+            $new_viewpolygons[$row[0]] = " ";
+    }
+    
     foreach ($new_viewpolygons as $vid=>$new_viewpolygon)
     {    
-
+        
         $old_viewpolygon = mysql_get_single_value("SELECT p_vehicle_viewpolygon FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_vehicleid = '$vid'  AND p_vehicle_profileid = '$pid'");
-
+        
         if($old_viewpolygon != $new_viewpolygon)
         {
             $query =
@@ -556,6 +575,8 @@ function read_viewobjects()
                 "SET p_vehicle_viewpolygon = '$new_viewpolygon' ".
                 "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
 
+
+            
             mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
 
             $is_new_viewobject = true;
@@ -563,12 +584,12 @@ function read_viewobjects()
     }
     
 
-
     $query =
         "SELECT data_value ".
         "FROM geov_moos_opgrid.moos_opgrid_data ".
         "WHERE data_variable='VIEW_POINT' ".
         "AND data_userid = $sim_id ".
+        "AND data_time >= UNIX_TIMESTAMP()-".POINT_EXPIRE." ".
         "ORDER BY data_id DESC LIMIT 20";
     
     $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
@@ -589,9 +610,9 @@ function read_viewobjects()
 
         // 0 -> unicorn
         // 1 -> waypoint
-        $v_name = explode("_", $label[1]);
+        $v_name = substr($label[1], 0, strrpos($label[1], "_"));        
         
-        if(sizeof($v_name) == 2 && $v_name[1] != "")
+        if($v_name != "")
         {            
             $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name[0]."'");
 
@@ -600,9 +621,22 @@ function read_viewobjects()
         }
     }
 
+    $query =
+        "SELECT p_vehicle_vehicleid FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+        "WHERE p_vehicle_profileid = '$pid'";
+
+    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+
+    while($row = mysql_fetch_row($result))
+    {
+        if(!array_key_exists($row[0], $new_viewpoints))
+            $new_viewpoints[$row[0]] = " ";
+    }
+    
+
     foreach ($new_viewpoints as $vid=>$new_viewpoint)
     {    
-        $old_viewpoint = mysql_get_single_value("SELECT p_vehicle_viewpoint FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_vehicleid = '$vid'  AND p_vehicle_profileid = '$pid'");
+        $old_viewpoint = mysql_get_single_value("SELECT p_vehicle_viewpoint FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'");
         
         if($old_viewpoint != $new_viewpoint)
         {
