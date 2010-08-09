@@ -10,8 +10,8 @@ define("GE_CLIENT_ID", 2);
 
 // temporal lifetime of autoshow targets
 define("AUTOSHOW_DECAY", 600);
-define("POLY_EXPIRE", 7200);
-define("POINT_EXPIRE", 1200);
+define("POLY_EXPIRE", 8*3600);
+define("POINT_EXPIRE", 3600);
 
 /************************************************************************************
  connections
@@ -544,7 +544,7 @@ function read_viewobjects()
         // 0 -> oex_harpo
         // 1 -> DEPLOY
         $v_name = substr($label[1], 0, strrpos($label[1], "_"));        
-        
+	
         $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name."'");
 
         if(!array_key_exists($vid, $new_viewpolygons))
@@ -610,11 +610,13 @@ function read_viewobjects()
 
         // 0 -> unicorn
         // 1 -> waypoint
-        $v_name = substr($label[1], 0, strrpos($label[1], "_"));        
-        
-        if($v_name != "")
+        $v_name = substr($label[1], 0, strrpos($label[1], "_"));
+       
+
+       // reject blank ones
+        if($v_name != "" && $label[1][strlen($label[1])-1] != "_")
         {            
-            $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name[0]."'");
+            $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name."'");
 
             if(!array_key_exists($vid, $new_viewpoints))
                 $new_viewpoints[$vid] = $new_viewpoint;
