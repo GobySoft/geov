@@ -1,10 +1,10 @@
 <?php
-  /************************************************************************************
+/************************************************************************************
    t. schneider | tes at mit.edu | 6.5.08
    laboratory for autonomous marine sensing systems
 
    outputs opgrid
-  ************************************************************************************/
+************************************************************************************/
 
 define("GE_CLIENT_ID", 2);
 
@@ -518,7 +518,7 @@ function read_viewobjects()
     $query =
         "SELECT data_value ".
         "FROM geov_moos_opgrid.moos_opgrid_data ".
-        "WHERE data_variable='VIEW_POLYGON' ".
+        "WHERE data_variable='OLD_VIEW_POLYGON' ".
         "AND data_userid = $sim_id ".
         "AND data_time >= UNIX_TIMESTAMP()-".POLY_EXPIRE." ".
         "ORDER BY data_id DESC LIMIT 10";
@@ -587,7 +587,7 @@ function read_viewobjects()
     $query =
         "SELECT data_value ".
         "FROM geov_moos_opgrid.moos_opgrid_data ".
-        "WHERE data_variable='VIEW_POINT' ".
+        "WHERE data_variable='OLD_VIEW_POINT' ".
         "AND data_userid = $sim_id ".
         "AND data_time >= UNIX_TIMESTAMP()-".POINT_EXPIRE." ".
         "ORDER BY data_id DESC LIMIT 20";
@@ -613,7 +613,7 @@ function read_viewobjects()
         $v_name = substr($label[1], 0, strrpos($label[1], "_"));
        
 
-       // reject blank ones
+        // reject blank ones
         if($v_name != "" && $label[1][strlen($label[1])-1] != "_")
         {            
             $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name."'");
@@ -734,6 +734,9 @@ function plot_viewpolygon($datum)
             for($i = 4; $i < sizeof($pairs); ++$i)
             {
                 $xypair = explode(",", $pairs[$i]);
+
+                if(!$xypair[0] || !$xypair[1])
+                    continue;
                 
                 $geodesy->setUTM((int)$xypair[0]+(int)$datum["x"], (int)$xypair[1] + (int)$datum["y"], $datum["zone"]);
                 $geodesy->convertTMtoLL();
