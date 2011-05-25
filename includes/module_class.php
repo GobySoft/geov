@@ -781,13 +781,20 @@ class Module
         if(!$this->vtable)
             return;
 
+
+
         if($this->name == "core")
         {
             $color_insert1 = ", p_vehicle_color";
             $color = $this->find_closest_color_from_id($vehicleid);
             $color_insert2 = ",'$color'";
         }        
-            
+        else
+        {
+            $color_insert1 = "";
+            $color_insert2 = "";
+        }
+        
         $query =
             "INSERT INTO ".$this->db.".".$this->name."_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid".$color_insert1.") ".
             "VALUES('$profileid', '$vehicleid'".$color_insert2.") ";

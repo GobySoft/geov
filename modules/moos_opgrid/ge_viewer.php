@@ -602,10 +602,16 @@ function read_viewobjects()
 
         // 0 -> active,true
         // 1 -> label,unicorn_waypoint
+//        if(count($new_viewpoint) != 2 )
+        //           continue;
+        
         $pairs = explode(":", $new_viewpoint);
-
+        
         // 0 -> label
         // 1 -> unicorn_waypoint
+//        if(count($pairs) !=2 )
+        //           continue;
+        
         $label = explode(",", $pairs[1]);
 
         // 0 -> unicorn
