@@ -225,9 +225,9 @@ function realtime($thistime)
             }
 
             
-            if($type == "SENSOR_CONTACT" || $type == "LAMSS_CONTACT")
+            if($type == "SENSOR_CONTACT" || $type == "LAMSS_CONTACT" || $type == "DSOP_CONTACT")
                 display_contact($type, $row["data_value"], $lookup_table, $decay_percent);
-            else if ($type == "SENSOR_TRACK" || $type == "LAMSS_TRACK")
+            else if ($type == "SENSOR_TRACK" || $type == "LAMSS_TRACK" || $type == "DSOP_TRACK")
                 display_track($type, $row["data_value"], $lookup_table, $decay_percent);   
             else if ($type == "SENSOR_STATUS")
                 display_status($row["data_value"], $lookup_table, $decay_percent);
@@ -387,6 +387,7 @@ function display_contact($type, $message, $lookup, $decay_percent)
             
 //   CONTACT_REPORT_IN: utm_y2lat:xp(yp)=42.4937214144074,utm_x2lon:yp(xp)=10.9555986464678,MessageType=LAMSS_CONTACT,node=3,track=nan,state=2,xp=4510,yp=2738,nav_hdg=107.47,nav_dep=10.0,nav_spd=1.4,bearing=7.3,sigma=3.5,rate=nan,rate_sigma=0.12,snr=0.0,time=1255793803,nfeat=nan,feat1=nan,feat2=nan,feat3=nan,feat4=nan,feat5=nan,collaboration_mode=OFF
         case "LAMSS_CONTACT":
+        case "DSOP_CONTACT":
             $platform = token_parse($message, "node");
             $sensor_hdg = token_parse($message, "nav_hdg");
             if(!$sensor_hdg) // PLUS version
@@ -424,6 +425,7 @@ function display_track($type, $message, $lookup, $decay_percent)
 
             //   TRACK_REPORT_IN: MessageType=LAMSS_TRACK,node=3,nav_x=4283,nav_y=2792,nav_hdg=132,nav_spd=1.4,nav_dep=10,time=1255712871,tgt_num=1,x=4535,y=3082,heading=114,speed=0.9
         case "LAMSS_TRACK":
+        case "DSOP_TRACK":
             $platform = token_parse($message, "node");
             $track_number = token_parse($message, "tgt_num");            
             $track_lat = token_parse($message, "utm_y2lat:x(y)");
