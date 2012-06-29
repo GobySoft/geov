@@ -1,0 +1,74 @@
+ProcessConfig = iMOOS2SQL
+{
+  common {  # Configuration common to all Goby MOOS applications 
+            # (opt)
+    log: true  # Should we write a text log of the terminal 
+               # output? (opt) (default=true) (can also set MOOS 
+               # global "log=")
+    log_path: "./"  # Directory path to write the text log of the 
+                    # terminal output (if log=true) (opt) 
+                    # (default="./") (can also set MOOS global 
+                    # "log_path=")
+    community: "AUV23"  # The vehicle's name (opt) (can also set 
+                        # MOOS global "Community=")
+    lat_origin: 42.5  # Latitude in decimal degrees of the local 
+                      # cartesian datum (opt) (can also set MOOS 
+                      # global "LatOrigin=")
+    lon_origin: 10.9  # Longitude in decimal degrees of the local 
+                      # cartesian datum (opt) (can also set MOOS 
+                      # global "LongOrigin=")
+    app_tick: 10  # Frequency at which to run Iterate(). (opt) 
+                  # (default=10)
+    comm_tick: 10  # Frequency at which to call into the MOOSDB 
+                   # for mail. (opt) (default=10)
+    verbosity: VERBOSITY_VERBOSE  # Verbosity of the terminal 
+                                  # window output (VERBOSITY_QUIET, 
+                                  # VERBOSITY_WARN, 
+                                  # VERBOSITY_VERBOSE, 
+                                  # VERBOSITY_DEBUG, VERBOSITY_GUI) 
+                                  # (opt) 
+                                  # (default=VERBOSITY_VERBOSE)
+    initializer {  # Publish a constant value to the MOOSDB at 
+                   # startup (repeat)
+      type: INI_DOUBLE  # type of MOOS variable to publish 
+                        # (INI_DOUBLE, INI_STRING) (req)
+      moos_var: "SOME_MOOS_VAR"  # name of MOOS variable to 
+                                 # publish to (req)
+      global_cfg_var: "LatOrigin"  # Optionally, instead of 
+                                   # giving `sval` or `dval`, give 
+                                   # a name here of a global MOOS 
+                                   # variable (one at the top of 
+                                   # the file) whose contents 
+                                   # should be written to 
+                                   # `moos_var` (opt)
+      dval: 3.454  # Value to write for type==INI_DOUBLE (opt)
+      sval: "a string"  # Value to write for type==INI_STRING 
+                        # (opt)
+    }
+  }
+  simulation: false  # In simulation mode - writing to simulation 
+                     # mode users in GEOV (opt) (default=false)
+  mysql_host: ""  # IP Address or DNS for GEOV MYSQL server (req)
+  mysql_user: ""  # User name for GEOV input (req)
+  mysql_password: ""  # Password for GEOV input (req)
+  mysql_port: 3306  # Port for GEOV MYSQL server (opt) 
+                    # (default=3306)
+  mysql_core_db_name: "geov_core"  # Name of core GEOV database 
+                                   # (opt) (default="geov_core")
+  status_var: "NODE_REPORT"  # Name of status variable (opt) 
+                             # (default="NODE_REPORT")
+  parse_status: false  # parse the status message given in 
+                       # `status_var` and write to the GEOV MYSQL 
+                       # server in the core_db (opt) (default=false)
+  aux_db {  #  (repeat)
+    name: ""  # Name of the auxilary database (must be on 
+              # mysql_host) (req)
+    echo {  #  (repeat)
+      from_moos_var: ""  # MOOS variable to echo to this database 
+                         # (req)
+      blackout_time: 0  # will not publish more than one this 
+                        # number of seconds, 0 is no blackout (opt) 
+                        # (default=0)
+    }
+  }
+}

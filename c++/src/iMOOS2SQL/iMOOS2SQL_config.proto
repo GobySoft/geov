@@ -1,0 +1,32 @@
+import "goby/moos/protobuf/goby_moos_app.proto";
+import "goby/common/protobuf/option_extensions.proto";
+
+message iMOOS2SQLConfig
+{
+  optional GobyMOOSAppConfig common = 1 [(goby.field).description="Configuration common to all Goby MOOS applications"]; // see tes_moos_app.proto
+
+
+  optional bool simulation = 3 [(goby.field).description="In simulation mode - writing to simulation mode users in GEOV", default=false];
+
+  required string mysql_host = 4 [(goby.field).description="IP Address or DNS for GEOV MYSQL server"];
+  required string mysql_user = 5 [(goby.field).description="User name for GEOV input"];
+  required string mysql_password = 6 [(goby.field).description="Password for GEOV input"];
+  optional int32 mysql_port = 7 [(goby.field).description="Port for GEOV MYSQL server", default=3306];
+  optional string mysql_core_db_name = 8 [(goby.field).description="Name of core GEOV database", default="geov_core"];
+
+  optional string status_var = 10 [(goby.field).description="Name of status variable", default="NODE_REPORT"];
+  optional bool parse_status = 11 [(goby.field).description="parse the status message given in `status_var` and write to the GEOV MYSQL server in the core_db", default=false];
+
+  repeated AuxDatabase aux_db = 100;
+  
+  message AuxDatabase
+  {
+    required string name = 1 [(goby.field).description="Name of the auxilary database (must be on mysql_host)"];
+    repeated EchoRequest echo = 2;
+    message EchoRequest
+    {
+      required string from_moos_var = 1 [(goby.field).description="MOOS variable to echo to this database"];
+      optional int32 blackout_time = 2 [(goby.field).description="will not publish more than one this number of seconds, 0 is no blackout", default = 0];
+    }
+  }
+}

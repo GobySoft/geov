@@ -1,0 +1,6 @@
+2010-Oct-03 22:24:09.915448	               	(Warning): no status variable specified, using AIS_REPORT
+2010-Oct-03 22:24:09.916310	               	not in simulation mode
+2010-Oct-03 22:24:09.917068	               	Adding variable: AIS_REPORT to database: geov_moos_cp on blackout: 2
+2010-Oct-03 22:24:09.917249	               	Adding variable: DB_TIME to database: geov_moos_cp on blackout: 4
+2010-Oct-03 22:24:09.918210	               	(Warning): NOT parsing status report. set parse_status = true in .moos file to do so (you will not see vehicles)
+2010-Oct-03 22:24:09.924507	               	(Error): could not select core database

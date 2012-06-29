@@ -1,0 +1,26 @@
+t. schneider tes@mit.edu 4.23.08
+laboratory for autonomous marine sensing systems
+massachusetts institute of technology 
+
+readme for iMOOS2SQL
+
+this process is a program running under the MOOS robotic control
+software system developed by paul newman:
+http://www.robots.ox.ac.uk/%7Epnewman/TheMOOS/index.html
+
+> compilation:
+you will need libmysqlclient15-dev (MySQL client developer library)
+
+> usage:
+iMOOS2SQL file.moos [name to register with moos]
+
+an example .moos configuration file (with comments) is provided
+in this directory.
+
+this process may also be launched by pAntler.
+
+> purpose:
+takes AIS_REPORT variables from the local MOOSDB and imports them into a MySQL
+database for the purpose of geov (google earth ocean viewer).
+
+this process adds to the functionality of pAIS2SQL (and thus replaces it).
