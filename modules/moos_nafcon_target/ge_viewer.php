@@ -231,8 +231,8 @@ function realtime($thistime)
                 display_track($type, $row["data_value"], $lookup_table, $decay_percent);   
             else if ($type == "SENSOR_STATUS")
                 display_status($row["data_value"], $lookup_table, $decay_percent);
-            else if ($type == "ACTIVE_CONTACT")
-                display_active_contact($row["data_value"], $lookup_table, $decay_percent);
+            else if ($type == "ACTIVE_CONTACT" || $type == "DSOP_SONAR_CONTACTS")
+                display_active_contact($type, $row["data_value"], $lookup_table, $decay_percent);
 
             
             $kml->pop();
@@ -450,19 +450,46 @@ function display_active_contact($type, $message, $lookup, $decay_percent)
 {
     global $kml;    
     
+
     $platform = token_parse($message, "platform_id");
     $sensor_hdg = token_parse($message, "platform_hdg");
+    if(!$sensor_hdg)
+        $sensor_hdg = token_parse($message, "platform_heading");
+
+
     $sensor_lat = token_parse($message, "platform_nav_lat");
     $sensor_lon = token_parse($message, "platform_nav_lon");
     $contactsize = token_parse($message, "contactsize");
+    if(!$contactsize)
+        $contactsize = token_parse($message, "num_contacts");
+
+
     $ping_offset = token_parse($message, "ping_time_offset");
     $altitude = token_parse($message, "platform_altitude");
     
     
     for($i = 1; $i <= min(4, $contactsize); ++$i)
     {
-        $contact_abs_bearing[$i] = (double)token_parse($message, "contact".$i."_deg") + $sensor_hdg;
-        $contact_time[$i] = (double)token_parse($message, "contact".$i."_sec");
+        $contact_bearing_str = token_parse($message, "contact".$i."_deg");
+        if(!$contact_bearing_str)
+             $contact_bearing_str = token_parse($message, "cnt".$i."_deg");
+                
+        $contact_abs_bearing[$i] = (double)$contact_bearing_str + $sensor_hdg;
+
+
+        $kml->push("Folder");
+        $kml->element("name", "abs_bearing".$i."=".$contact_abs_bearing[$i]);
+        $kml->pop();
+
+
+        $contact_time_str = token_parse($message, "contact".$i."_sec");
+        if(!$contact_time_str)
+            $contact_time_str = token_parse($message, "cnt".$i."_sec");
+        
+
+        $contact_time[$i] = (double)$contact_time_str;
+
+
         $contact_dist[$i] = ($contact_time[$i]+$ping_offset)/2*SOUND_SPEED;
     }    
     
