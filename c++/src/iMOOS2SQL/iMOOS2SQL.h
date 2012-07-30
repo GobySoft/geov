@@ -55,8 +55,10 @@ class CiMOOS2SQL :
     public GobyMOOSApp  {       
 #endif
   public:
-    static CiMOOS2SQL* get_instance();
+    static CiMOOS2SQL* get_instance(iMOOS2SQLConfig* cfg = 0);
 
+
+	
   private:
     void inbox(const CMOOSMsg& msg);
     void loop();
@@ -79,9 +81,9 @@ class CiMOOS2SQL :
     { GobyMOOSApp::subscribe(var, &CiMOOS2SQL::inbox, this); }
 
     //standard construction and destruction
-    CiMOOS2SQL();
+    CiMOOS2SQL(iMOOS2SQLConfig* cfg);
     virtual ~CiMOOS2SQL();
-    
+
   private:
     //std::string m_host_name;      /* server host (default=localhost) */
     //std::string m_user_name;      /* username (default=login name) */
@@ -122,7 +124,7 @@ class CiMOOS2SQL :
     //vector of vehiclename.vehicletype of the vehicles we have seen
     std::vector<std::string> m_known_vname;
 
-    static iMOOS2SQLConfig cfg_;
+	iMOOS2SQLConfig* cfg_;
     static CiMOOS2SQL* inst_;    
 
 };

@@ -26,10 +26,12 @@
 // define the blackout time for new results to be published to the mysql db
 // (in seconds per vehicle)
 
+#ifndef _WIN32
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #if GOBY_VERSION_MAJOR >= 2 
 #include "goby/common/logger.h"
@@ -47,18 +49,18 @@ using namespace std;
 using goby::util::as;
 using goby::util::glogger;
 
-iMOOS2SQLConfig CiMOOS2SQL::cfg_;
 CiMOOS2SQL* CiMOOS2SQL::inst_ = 0;
 
-CiMOOS2SQL* CiMOOS2SQL::get_instance()
+CiMOOS2SQL* CiMOOS2SQL::get_instance(iMOOS2SQLConfig* cfg)
 {
     if(!inst_)
-        inst_ = new CiMOOS2SQL();
+        inst_ = new CiMOOS2SQL(cfg);
     return inst_;
 }
 
-CiMOOS2SQL::CiMOOS2SQL()
-    : GobyMOOSApp(&cfg_)
+CiMOOS2SQL::CiMOOS2SQL(iMOOS2SQLConfig* cfg)
+    : GobyMOOSApp(cfg),
+	  cfg_(cfg)
 {
     glogger() << "reading our configuration..." << std::endl;
     read_configuration();
@@ -76,20 +78,20 @@ CiMOOS2SQL::CiMOOS2SQL()
     }
     /* connect to mysql server */
     if (mysql_real_connect (core_conn,
-                            cfg_.mysql_host().c_str(),
-                            cfg_.mysql_user().c_str(),
-                            cfg_.mysql_password().c_str(),
-                            cfg_.mysql_core_db_name().c_str(),
-                            cfg_.mysql_port(),
+                            cfg_->mysql_host().c_str(),
+                            cfg_->mysql_user().c_str(),
+                            cfg_->mysql_password().c_str(),
+                            cfg_->mysql_core_db_name().c_str(),
+                            cfg_->mysql_port(),
                             "/var/run/mysqld/mysqld.sock",
                             0) == NULL)
     {
         mysql_close (core_conn);
-        glogger() << die << "core mysql_real_connect() failed\n"<< cfg_.DebugString() << std::endl;
+        glogger() << die << "core mysql_real_connect() failed\n"<< cfg_->DebugString() << std::endl;
     }
 
     /* select db */
-    if (mysql_select_db(core_conn, cfg_.mysql_core_db_name().c_str()) != 0)
+    if (mysql_select_db(core_conn, cfg_->mysql_core_db_name().c_str()) != 0)
     {
         glogger() << die << "could not select core database" << std::endl;
     }
@@ -103,15 +105,15 @@ CiMOOS2SQL::CiMOOS2SQL()
     {
         /* connect to mysql server */
         if (mysql_real_connect ((*it).second,
-                                cfg_.mysql_host().c_str(),
-                                cfg_.mysql_user().c_str(),
-                                cfg_.mysql_password().c_str(),
+                                cfg_->mysql_host().c_str(),
+                                cfg_->mysql_user().c_str(),
+                                cfg_->mysql_password().c_str(),
                                 (*it).first.c_str(),
-                                cfg_.mysql_port(),
+                                cfg_->mysql_port(),
                                 "/var/run/mysqld/mysqld.sock",
                                 0) == NULL)
         {
-            glogger() << die << "core mysql_real_connect() failed\n" << cfg_.DebugString() << std::endl;
+            glogger() << die << "core mysql_real_connect() failed\n" << cfg_->DebugString() << std::endl;
         }
         
         /* select db */
@@ -126,8 +128,11 @@ CiMOOS2SQL::CiMOOS2SQL()
     // default to real user
     m_simulation_user = 0;
     
-    if(cfg_.simulation())
+    if(cfg_->simulation())
     {
+#ifdef _WIN32
+		glogger().is(goby::common::logger::DIE) && glogger() << "Simulation not supported in WIN32 version of iMOOS2SQL" << std::endl;
+#elif
         MYSQL_RES *res_set;
 
         string query = "SELECT USER()";
@@ -194,7 +199,8 @@ CiMOOS2SQL::CiMOOS2SQL()
                 }
             }
         }
-    }    
+#endif // simulation not supported
+	}
 }
 CiMOOS2SQL::~CiMOOS2SQL()
 {
@@ -218,9 +224,9 @@ void CiMOOS2SQL::inbox(const CMOOSMsg& msg)
     
     
     // got a new AIS_REPORT
-    if(MOOSStrCmp(key, cfg_.status_var()))
+    if(MOOSStrCmp(key, cfg_->status_var()))
     {
-        if(cfg_.parse_status())
+        if(cfg_->parse_status())
             parse_ais(sdata);
     }
     // other stuff we've subscribed for
@@ -277,38 +283,38 @@ void CiMOOS2SQL::read_configuration()
     
 
     glogger() << "reading in geodesy information: " << std::endl;
-    if (!cfg_.common().has_lat_origin() || !cfg_.common().has_lon_origin())
+    if (!cfg_->common().has_lat_origin() || !cfg_->common().has_lon_origin())
     {
         glogger() << die << "no lat_origin or lon_origin specified in configuration. this is required for geodesic conversion" << std::endl;
     }
     else
     {
-        if(m_geodesy.Initialise(cfg_.common().lat_origin(), cfg_.common().lon_origin()))
+        if(m_geodesy.Initialise(cfg_->common().lat_origin(), cfg_->common().lon_origin()))
             glogger() << "success!" << std::endl;
         else
             glogger() << die << "could not initialize geodesy" << std::endl;
     }
 
 
-    for(int i = 0; i < cfg_.aux_db_size(); ++i)
+    for(int i = 0; i < cfg_->aux_db_size(); ++i)
     {
-        m_conn[cfg_.aux_db(i).name()] = mysql_init(NULL);
+        m_conn[cfg_->aux_db(i).name()] = mysql_init(NULL);
         //initialize connection for auxiliary connections
-        if (m_conn[cfg_.aux_db(i).name()] == NULL)
+        if (m_conn[cfg_->aux_db(i).name()] == NULL)
         {
             glogger() << die << "mysql_init() failed (probably out of memory)" << std::endl;
         }
 
-        for(int j = 0; j < cfg_.aux_db(i).echo_size(); ++j)
+        for(int j = 0; j < cfg_->aux_db(i).echo_size(); ++j)
         {
-            m_var_list[cfg_.aux_db(i).echo(j).from_moos_var()].db_name = cfg_.aux_db(i).name();
-            m_var_list[cfg_.aux_db(i).echo(j).from_moos_var()].blackout_time = cfg_.aux_db(i).echo(j).blackout_time();
-            m_var_list[cfg_.aux_db(i).echo(j).from_moos_var()].last_publish = 0;
-            glogger() << "Adding variable: " << cfg_.aux_db(i).echo(j).from_moos_var() << " to database: " << cfg_.aux_db(i).name() << " on blackout: " << cfg_.aux_db(i).echo(j).blackout_time() << std::endl;
+            m_var_list[cfg_->aux_db(i).echo(j).from_moos_var()].db_name = cfg_->aux_db(i).name();
+            m_var_list[cfg_->aux_db(i).echo(j).from_moos_var()].blackout_time = cfg_->aux_db(i).echo(j).blackout_time();
+            m_var_list[cfg_->aux_db(i).echo(j).from_moos_var()].last_publish = 0;
+            glogger() << "Adding variable: " << cfg_->aux_db(i).echo(j).from_moos_var() << " to database: " << cfg_->aux_db(i).name() << " on blackout: " << cfg_->aux_db(i).echo(j).blackout_time() << std::endl;
         }
     }
 
-    if (!cfg_.parse_status())
+    if (!cfg_->parse_status())
         glogger() << warn << "NOT parsing status report. set parse_status = true in .moos file to do so (you will not see vehicles)" << std::endl;
 
 }
@@ -320,7 +326,7 @@ void CiMOOS2SQL::loop()
 // want to hear about (receive mail for)
 void CiMOOS2SQL::do_subscriptions()
 {
-    subscribe(cfg_.status_var());
+    subscribe(cfg_->status_var());
 
     // register for other variables
     map<string, moos_var>::iterator it;
@@ -489,7 +495,10 @@ bool CiMOOS2SQL::parse_ais(string sdata)
     if(vid == "")
     {
         MYSQL_RES *res_set;
-            
+
+		glogger() << group("select") << "vehicle_name: " << vname << std::endl;        
+		glogger() << group("select") << "escaped vehicle_name: " << escape(vname) << std::endl;        
+
         string query_veh = "SELECT vehicle_id FROM core_vehicle WHERE ";
         query_veh += "(lower(vehicle_name) = '" + escape(tolower(vname));
         query_veh += "' AND lower(vehicle_type) = '" + escape(tolower(vtype));
@@ -723,8 +732,8 @@ std::string CiMOOS2SQL::replace_vehicle_entry(std::string vtype, std::string vna
 
 std::string CiMOOS2SQL::escape(const std::string & s)
 {
-    unsigned long l = s.length();
-    char c [l*2+1];
-    mysql_real_escape_string(core_conn, c, s.c_str(), l);
-    return c;
+    unsigned long len = s.length();
+	std::string c(len*2, '\0');
+    mysql_real_escape_string(core_conn, &c[0], s.c_str(), len);
+	return std::string(c.c_str());
 }

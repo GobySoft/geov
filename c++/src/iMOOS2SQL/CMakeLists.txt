@@ -4,10 +4,6 @@
 #--------------------------------------------------------
 
 # mysql client library
-find_library(mysqlclient_LIB mysqlclient)  
-find_path(mysqlclient_PATH mysql/mysql.h)
-
-message(${mysqlclient_PATH})
 
 if(mysqlclient_LIB AND mysqlclient_PATH)
   file(GLOB PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/*.proto)  
@@ -15,7 +11,6 @@ if(mysqlclient_LIB AND mysqlclient_PATH)
   
   file(GLOB SRC *.cpp)
 
-  include_directories(${mysqlclient_PATH}/mysql)
   
   add_executable(iMOOS2SQL ${SRC} ${PROTO_SRCS} ${PROTO_HDRS})
   

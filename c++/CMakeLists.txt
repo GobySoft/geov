@@ -8,7 +8,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/")
 
 
 if(${WIN32})
-  add_definitions (-DNOMINMAX -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -D_WINUSER_)
+  add_definitions (-DNOMINMAX -D_WIN32_WINNT=0x0501)
   add_definitions( -DBOOST_ALL_NO_LIB)
   set( Boost_USE_STATIC_LIBS ON )
 endif()
