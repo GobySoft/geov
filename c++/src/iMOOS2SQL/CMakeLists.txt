@@ -21,5 +21,9 @@ if(mysqlclient_LIB AND mysqlclient_PATH)
     ${GOBY_LIBRARIES}
     ${Boost_LIBRARIES}
     ${PROTOBUF_LIBRARIES}
+    ssl
+    z
     )
 endif()
+
+install(TARGETS iMOOS2SQL RUNTIME DESTINATION bin)

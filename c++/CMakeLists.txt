@@ -25,5 +25,8 @@ include_directories(${GOBY_INCLUDE_DIRS})
 find_package(ProtobufLocal REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 
+PROTOBUF_INCLUDE_DIRS(${GOBY_INCLUDE_DIRS})
+PROTOBUF_INCLUDE_DIRS(${PROTOBUF_INCLUDE_DIRS})
+
 ## start adding subdirectories
 add_subdirectory(src)

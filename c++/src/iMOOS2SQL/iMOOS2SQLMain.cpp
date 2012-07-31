@@ -24,6 +24,5 @@
  
 int main(int argc, char * argv[])
 {
-	iMOOS2SQLConfig cfg;
-	return goby::moos::run_cfg<CiMOOS2SQL, iMOOS2SQLConfig>(argc, argv, &cfg);
+  return goby::moos::run<CiMOOS2SQL>(argc, argv);
 }

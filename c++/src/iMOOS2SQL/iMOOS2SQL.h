@@ -43,9 +43,9 @@
 
 
 // for mysql C API
-#include <mysql/my_global.h>
-#include <mysql/my_sys.h>
-#include <mysql/mysql.h>
+#include "mysql/my_global.h"
+#include "mysql/my_sys.h"
+#include "mysql/mysql.h"
 
 class CiMOOS2SQL :
 #if GOBY_VERSION_MAJOR < 2
@@ -55,7 +55,7 @@ class CiMOOS2SQL :
     public GobyMOOSApp  {       
 #endif
   public:
-    static CiMOOS2SQL* get_instance(iMOOS2SQLConfig* cfg = 0);
+    static CiMOOS2SQL* get_instance();
 
 
 	
@@ -81,7 +81,7 @@ class CiMOOS2SQL :
     { GobyMOOSApp::subscribe(var, &CiMOOS2SQL::inbox, this); }
 
     //standard construction and destruction
-    CiMOOS2SQL(iMOOS2SQLConfig* cfg);
+    CiMOOS2SQL();
     virtual ~CiMOOS2SQL();
 
   private:
@@ -124,7 +124,7 @@ class CiMOOS2SQL :
     //vector of vehiclename.vehicletype of the vehicles we have seen
     std::vector<std::string> m_known_vname;
 
-	iMOOS2SQLConfig* cfg_;
+    static iMOOS2SQLConfig cfg_;
     static CiMOOS2SQL* inst_;    
 
 };
