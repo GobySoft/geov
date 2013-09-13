@@ -8,7 +8,6 @@
 
 $script_begin = microtime();
 
-
 define("GE_CLIENT_ID", 2);
 
 //error to display when there is no data

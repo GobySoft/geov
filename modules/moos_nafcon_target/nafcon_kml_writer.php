@@ -162,8 +162,102 @@ class nafcon_kml_writer extends kml_writer
         }
     }
    
+    // alpha is in range 0-1 where 1 is fully opaque
+    function nafcon_range_track_line($platform, $lat, $lon, $target_range, $target_range_rate, $alpha)
+    {
+
+        global $kml;
+        
+        
+            $target_line_hdg = head2poshead(0.0);
+            $rotation = heading2rotation(0.0);
+            $line_length = $target_range;
+            if ($target_range_rate < 0)	
+              {
+                // Blue-shifted target (approaching)
+                $r = 50;
+                $g = 50;
+                $b = 190;
+              }      
+            else
+              {
+                // Red-shifted target (diverging)
+                $r = 240;
+                $g = 40;
+                $b = 40;
+              }      
+            
+            $this->push("Placemark");
+            $this->element("name", "range-track line ");
+            $this->push("LineString");
+            $this->element("tessellate", "1");
+            $this->push("coordinates");
+            $this->insert($lon.",".$lat.",0");
+
+            list($dlat, $dlon) = simple_xy2latlong(0, 0, cos(deg2rad($rotation))*$line_length, sin(deg2rad($rotation))*$line_length, $lat);
+
+            $this->insert(($lon+$dlon).",".($lat+$dlat).",0");
+            $this->pop();
+            $this->pop();
+            
+            $this->push("Style");
+            $this->push("LineStyle");
+            $this->element("width", "2");
+            $this->element("color", sprintf("%02X%02X%02X%02X", $alpha*255, $b, $g, $r));
+            $this->pop();
+            $this->pop();
+            
+            $this->pop();
+    }
+    function nafcon_range_track_circle($platform, $lat, $lon, $target_range, $target_range_rate, $alpha)
+    {
+
+        global $kml;
+        
+        
+            $radius = $target_range
+;
+            if ($target_range_rate < 0.0)	
+              {
+                // Blue-shifted target (approaching)
+                $r = 50;
+                $g = 50;
+                $b = 190;
+              }      
+            else
+              {
+                // Red-shifted target (diverging)
+                $r = 240;
+                $g = 40;
+                $b = 40;
+              }      
+            
+            $this->push("Placemark");
+            $this->element("name", "range-track circle");
+            $this->push("LineString");
+            $this->element("tessellate", "1");
+            $this->push("coordinates");
+
+            $n=100;
+	    $delta = 360.0/$n;
+            for ($i=1; $i <= $n+1; ++$i)
+	    {
+  	      $rotation = ($i-1)*$delta;    
+              list($dlat, $dlon) = simple_xy2latlong(0, 0, cos(deg2rad($rotation))*$radius, sin(deg2rad($rotation))*$radius, $lat);
+              $this->insert(($lon+$dlon).",".($lat+$dlat).",0");
+	    }
+            $this->pop(); // coordinates
+            $this->pop(); // Linestring
+            
+            $this->push("Style");
+            $this->push("LineStyle");
+            $this->element("width", "2");
+            $this->element("color", sprintf("%02X%02X%02X%02X", $alpha*255, $b, $g, $r));
+            $this->pop();
+            $this->pop();
+            
+            $this->pop(); //Placemark
+    }
+
 }
-
-
-
 ?>

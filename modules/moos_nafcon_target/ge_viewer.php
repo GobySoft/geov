@@ -197,7 +197,7 @@ function realtime($thistime)
 
             $platform = token_parse($row["data_value"], "SourcePlatformId"); // NAFCON_MESSAGES
             
-            if(!$platform) // ACTIVE_CONTACT
+            if(!$platform) // ACTIVE_CONTACT // RANGE_TRACKS
                 $platform = token_parse($row["data_value"], "platform_id");
 
             if(!$platform) // LAMSS_CONTACT / LAMSS_TRACK
@@ -211,6 +211,9 @@ function realtime($thistime)
 
             if(!$t) // LAMSS_CONTACT / LAMSS_TRACK
                 $t = token_parse($row["data_value"], "time");
+
+            if(!$t) // RANGE_TRACK
+                $t = token_parse($row["data_value"], "ping_time");
 
             
             $type = token_parse($row["data_value"], "MessageType");
@@ -233,6 +236,8 @@ function realtime($thistime)
                 display_status($row["data_value"], $lookup_table, $decay_percent);
             else if ($type == "ACTIVE_CONTACT" || $type == "DSOP_SONAR_CONTACTS")
                 display_active_contact($type, $row["data_value"], $lookup_table, $decay_percent);
+            else if ($type == "DSOP_SONAR_RANGE_ONLY_TRACK")
+                display_range_track($type, $row["data_value"], $lookup_table, $decay_percent);
 
             
             $kml->pop();
@@ -494,6 +499,23 @@ function display_active_contact($type, $message, $lookup, $decay_percent)
     }    
     
     $kml->nafcon_active_contact_line($platform, $sensor_lat, $sensor_lon, $contact_abs_bearing, $contact_dist, (1-$decay_percent));
+}
+
+// display a range track message
+function display_range_track($type, $message, $lookup, $decay_percent)
+{
+    global $kml;    
+
+    $platform = token_parse($message, "platform_id");
+
+    $sensor_lat = token_parse($message, "platform_nav_lat");
+    $sensor_lon = token_parse($message, "platform_nav_lon");
+
+    $target_range = token_parse($message, "range");	 
+    $target_range_rate = token_parse($message, "rate");	 
+    
+    $kml->nafcon_range_track_circle($platform, $sensor_lat, $sensor_lon, $target_range, $target_range_rate, (1-$decay_percent));
+
 }
 
 ?>
