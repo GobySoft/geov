@@ -514,8 +514,11 @@ function display_range_track($type, $message, $lookup, $decay_percent)
     $target_range = token_parse($message, "range");	 
     $target_range_rate = token_parse($message, "rate");	 
     
+    $kml->push("Folder");	
+    $kml->element("name", "Parsed target range rate: ".$target_range_rate);    
+    $kml->pop();
+
     $kml->nafcon_range_track_circle($platform, $sensor_lat, $sensor_lon, $target_range, $target_range_rate, (1-$decay_percent));
 
 }
-
 ?>

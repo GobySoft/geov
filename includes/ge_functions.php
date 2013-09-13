@@ -118,6 +118,8 @@ function kml_mysql_query($query)
 
 function token_parse($haystack, $needle, $pair_delimiter = ",", $key_delimiter = "=")
 {
+    $haystack = $haystack.",";	
+
     if (!stristr($haystack, $needle))
         return false;
 
