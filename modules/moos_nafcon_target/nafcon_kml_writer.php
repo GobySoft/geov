@@ -217,21 +217,70 @@ class nafcon_kml_writer extends kml_writer
         
             $radius = $target_range
 ;
-            if ($target_range_rate < 0.0)	
+            if ($target_range_rate < -4.0)	
               {
                 // Blue-shifted target (approaching)
-                $r = 50;
-                $g = 50;
-                $b = 190;
+                $r = 138;
+                $g = 43;
+                $b = 226;
+              }      
+            else if ($target_range_rate < -3.0)	
+              {
+	      // slate blue
+                $r = 0;
+                $g = 127;
+                $b = 255;
+              }      
+            else if ($target_range_rate < -2.0)	
+              {
+	      // Light sea green
+                $r = 32;
+                $g = 178;
+                $b = 170;
+              }      
+            else if ($target_range_rate < -1.0)	
+              {
+	      // lawn green
+                $r = 127;
+                $g = 255;
+                $b = 0;
+              }      
+            else if ($target_range_rate < 1.0)	
+              {
+	      // khaki
+                $r = 255;
+                $g = 246;
+                $b = 143;
+              }      
+            else if ($target_range_rate < 2.0)	
+              {
+	      // orange
+                $r = 238;
+                $g = 118;
+                $b = 0;
+              }      
+            else if ($target_range_rate < 3.0)	
+              {
+	      // coral
+                $r = 255;
+                $g = 127;
+                $b = 0;
+              }      
+            else if ($target_range_rate < 4.0)	
+              {
+	      // Orange red
+                $r = 255;
+                $g = 36;
+                $b = 0;
               }      
             else
               {
                 // Red-shifted target (diverging)
-                $r = 240;
-                $g = 40;
-                $b = 40;
-              }      
-            
+                $r = 255;
+                $g = 20;
+                $b = 147;
+              }  
+    
             $this->push("Placemark");
             $this->element("name", "range-track circle");
             $this->push("LineString");
