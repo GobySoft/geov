@@ -158,9 +158,13 @@ function realtime($thistime)
       {
 	$query = "SELECT data_value FROM geov_moos_mseas.moos_mseas_data WHERE data_variable='MSEAS_DISPLAY_TXT_FILE_PATH' AND data_userid = $sim_id AND data_time < $thistime ORDER BY data_id DESC LIMIT 1";	
 
-	$path = mysql_get_single_value($query);
-
 	$username = mysql_get_single_value("SELECT user_name from geov_core.core_user WHERE user_id=$sim_id");
+
+	$original_path = mysql_get_single_value($query);
+        $new_prefix = "/var/www/mseas_disp_figs/".$username;
+	$path = str_replace ("/home/spetillo/missions-lamss/logs/mseas_disp_figs", $new_prefix, $original_path);    
+
+
 
         $kml->push_folder("User: ".$username);
     	$kml->pop();
