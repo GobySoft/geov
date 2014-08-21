@@ -122,20 +122,84 @@ class nafcon_kml_writer extends kml_writer
  
 
     // alpha is in range 0-1 where 1 is fully opaque
-    function nafcon_active_contact_line($platform, $lat, $lon, $abs_hdg, $contact_dist, $alpha)
+    function nafcon_active_contact_line($platform, $lat, $lon, $abs_hdg, $contact_dist, $contact_doppler, $alpha)
     {
 
         global $kml;
         
-        
+            
         for($i = 1; $i <= count($abs_hdg); ++$i)
         {    
             $abs_hdg[$i] = head2poshead($abs_hdg[$i]);
             $rotation = heading2rotation($abs_hdg[$i]);
             $line_length = $contact_dist[$i];
+
             $r = 173;
             $g = 34;
             $b = 190;      
+            if ($contact_doppler[$i] > 4.0)	
+              {
+                // Blue-shifted target (approaching)
+                $r = 138;
+                $g = 43;
+                $b = 226;
+              }      
+            else if ($contact_doppler[$i] > 3.0)	
+              {
+	      // slate blue
+                $r = 0;
+                $g = 127;
+                $b = 255;
+              }      
+            else if ($contact_doppler[$i] > 2.0)	
+              {
+	      // Light sea green
+                $r = 32;
+                $g = 178;
+                $b = 170;
+              }      
+            else if ($contact_doppler[$i] > 1.0)	
+              {
+	      // lawn green
+                $r = 127;
+                $g = 255;
+                $b = 0;
+              }      
+            else if ($contact_doppler[$i] > -1.0)	
+              {
+	      // khaki
+                $r = 255;
+                $g = 246;
+                $b = 143;
+              }      
+            else if ($contact_doppler[$i] > -2.0)	
+              {
+	      // orange
+                $r = 238;
+                $g = 118;
+                $b = 0;
+              }      
+            else if ($contact_doppler[$i] > -3.0)	
+              {
+	      // coral
+                $r = 255;
+                $g = 127;
+                $b = 0;
+              }      
+            else if ($contact_doppler[$i] > -4.0)	
+              {
+	      // Orange red
+                $r = 255;
+                $g = 36;
+                $b = 0;
+              }      
+            else
+              {
+                // Red-shifted target (diverging)
+                $r = 255;
+                $g = 20;
+                $b = 147;
+              }  
 
             
             $this->push("Placemark");

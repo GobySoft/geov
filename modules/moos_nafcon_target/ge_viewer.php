@@ -475,30 +475,43 @@ function display_active_contact($type, $message, $lookup, $decay_percent)
     
     for($i = 1; $i <= min(4, $contactsize); ++$i)
     {
-        $contact_bearing_str = token_parse($message, "contact".$i."_deg");
-        if(!$contact_bearing_str)
-             $contact_bearing_str = token_parse($message, "cnt".$i."_deg");
-                
-        $contact_abs_bearing[$i] = (double)$contact_bearing_str + $sensor_hdg;
-
-
-        $kml->push("Folder");
-        $kml->element("name", "abs_bearing".$i."=".$contact_abs_bearing[$i]);
-        $kml->pop();
-
-
         $contact_time_str = token_parse($message, "contact".$i."_sec");
         if(!$contact_time_str)
             $contact_time_str = token_parse($message, "cnt".$i."_sec");
-        
 
-        $contact_time[$i] = (double)$contact_time_str;
+	if ((double)$contact_time_str > 0)        
+	{
+            $contact_time[$i] = (double)$contact_time_str;
+
+	    $contact_dist[$i] = ($contact_time[$i]+$ping_offset)/2*SOUND_SPEED;
+
+            $contact_bearing_str = token_parse($message, "contact".$i."_deg");
+            if(!$contact_bearing_str)
+                $contact_bearing_str = token_parse($message, "cnt".$i."_deg");
+                
+            $contact_abs_bearing[$i] = (double)$contact_bearing_str + $sensor_hdg;
+
+            $kml->push("Folder");
+            $kml->element("name", "abs_bearing".$i."=".$contact_abs_bearing[$i]);
+            $kml->pop();
 
 
-        $contact_dist[$i] = ($contact_time[$i]+$ping_offset)/2*SOUND_SPEED;
+	    $contact_doppler_str = token_parse($message, "contact".$i."_dop");
+            if(!$contact_doppler_str)
+                $contact_doppler_str = token_parse($message, "cnt".$i."_dop");
+	    $contact_doppler[$i] = (double)$contact_doppler_str; 
+
+            $kml->push("Folder");
+            $kml->element("name", "doppler".$i."=".$contact_doppler[$i]);
+            $kml->pop();
+	 }
+         else
+         {
+            $contactsize = $i - 1;
+         }
     }    
     
-    $kml->nafcon_active_contact_line($platform, $sensor_lat, $sensor_lon, $contact_abs_bearing, $contact_dist, (1-$decay_percent));
+    $kml->nafcon_active_contact_line($platform, $sensor_lat, $sensor_lon, $contact_abs_bearing, $contact_dist, $contact_doppler, (1-$decay_percent));
 }
 
 // display a range track message
