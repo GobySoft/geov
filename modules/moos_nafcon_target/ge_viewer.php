@@ -464,16 +464,21 @@ function display_active_contact($type, $message, $lookup, $decay_percent)
 
     $sensor_lat = token_parse($message, "platform_nav_lat");
     $sensor_lon = token_parse($message, "platform_nav_lon");
+
     $contactsize = token_parse($message, "contactsize");
     if(!$contactsize)
         $contactsize = token_parse($message, "num_contacts");
+
+    $maxcontactsize = token_parse($message, "max_contacts");
+    if(!$maxcontactsize)
+        $maxcontactsize = 4;
 
 
     $ping_offset = token_parse($message, "ping_time_offset");
     $altitude = token_parse($message, "platform_altitude");
     
     
-    for($i = 1; $i <= min(4, $contactsize); ++$i)
+    for($i = 1; $i <= min($maxcontactsize, $contactsize); ++$i)
     {
         $contact_time_str = token_parse($message, "contact".$i."_sec");
         if(!$contact_time_str)
