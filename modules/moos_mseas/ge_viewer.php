@@ -172,7 +172,7 @@ function realtime($thistime)
 	if(file_exists($path))
 	  {
 	    $contents = file_get_contents($path);
-	    $address = "http://".$_SERVER["SERVER_ADDR"]."/mseas_disp_figs/".$username;
+	    $address = "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/mseas_disp_figs/".$username;
 	    $kml->insert(str_replace ("/home/spetillo/missions-lamss/logs/mseas_disp_figs", $address, $contents));    
 	  }
 	else

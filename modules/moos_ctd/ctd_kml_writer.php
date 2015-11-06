@@ -15,7 +15,7 @@ class ctd_kml_writer extends kml_writer
         $this->element("name", $value." depth = ".$depth);
         $this->element("color", sprintf("%02x", $opacity*255)."ffffff");
         $this->push("Icon");
-        $this->element("href", "http://".$_SERVER["SERVER_ADDR"]."/geov/images/ctd/".$file);
+        $this->element("href", "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/geov/images/ctd/".$file);
         $this->pop(); // Icon
         $this->push("LatLonBox");
         $this->element("north", $north);

@@ -20,7 +20,6 @@ define("GE_CLIENT_ID", 2);
 
 $ip = $_SERVER["REMOTE_ADDR"];
 
-
 //establish connection information
 $query =
     "SELECT ".
@@ -63,7 +62,7 @@ $kml->push("NetworkLink", array("id"=>"networklink_core"));
 $kml->element("name", "geov core");
 $kml->element("open", "1");
 $kml->push("Link");
-$kml->element("href", "http://".$_SERVER["SERVER_ADDR"]."/geov/modules/core/ge_viewer.php");
+$kml->element("href", "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/geov/modules/core/ge_viewer.php");
 $kml->element("refreshMode", "onInterval");
 $kml->element("refreshInterval", "1");
 $kml->pop();
@@ -75,7 +74,7 @@ $kml->element("name", "geov core tracker");
 $kml->element("open", "1");
 $kml->element("flyToView", "1");
 $kml->push("Link");
-$kml->element("href", "http://".$_SERVER["SERVER_ADDR"]."/geov/modules/core/ge_viewer.php?fly_to=true");
+$kml->element("href", "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/geov/modules/core/ge_viewer.php?fly_to=true");
 $kml->element("viewRefreshMode", "onStop");
 $kml->element("viewRefreshTime", "0");
 $kml->element("viewFormat", "CAMERA=[lookatLon],[lookatLat],[lookatRange],[lookatTilt],[lookatHeading]&amp;VIEW=[horizFov],[vertFov],[horizPixels],[vertPixels],[terrainEnabled]");
@@ -95,7 +94,7 @@ while($row = mysql_fetch_assoc($result))
     $kml->element("name", "geov ".$row["module_name"]);
     $kml->element("open", "1");
     $kml->push("Link");
-    $kml->element("href", "http://".$_SERVER["SERVER_ADDR"]."/geov/".$row["module_ge_viewer"]);
+    $kml->element("href", "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/geov/".$row["module_ge_viewer"]);
     $kml->element("refreshMode", "onInterval");
     $kml->element("refreshInterval", $row["module_refresh_time"]);
     $kml->pop();

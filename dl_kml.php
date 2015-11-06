@@ -1,6 +1,6 @@
 <?php
 header("Content-Type: application/kml; charset=utf8");
-header('Content-disposition: attachment; filename=geov_core_'.str_replace(".","-",$_SERVER['SERVER_NAME']).'.kml');
+header('Content-disposition: attachment; filename=geov_core_'.str_replace(".","-",$_SERVER['SERVER_NAME']).'_port'.$_SERVER['SERVER_PORT'].'.kml');
 
 require_once("includes/kml_writer.php");
 $kml = new kml_writer();
@@ -13,7 +13,7 @@ $kml->element("flyToView", "1");
 $kml->element("open", "1");
 
 $kml->push("Link");
-$kml->element("href", "http://".$_SERVER["SERVER_ADDR"]."/geov/networklinks.php");
+$kml->element("href", "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/geov/networklinks.php");
 
 $kml->echo_kml(); // pops all before outputting
 

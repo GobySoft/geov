@@ -318,7 +318,7 @@ else
     $html->element("td", "preview: (aliasing will not happen in google earth)");
     $html->push("td");
     $html->push("div");
-    $html->img(array("src"=>"http://".$_SERVER["SERVER_ADDR"]."/".$vimg, "alt"=>"bad image", "height"=>"30", "width"=>(30*$vloa/$vbeam)));
+    $html->img(array("src"=>"http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/".$vimg, "alt"=>"bad image", "height"=>"30", "width"=>(30*$vloa/$vbeam)));
     $html->pop();
     $html->pop();
     $html->pop();    

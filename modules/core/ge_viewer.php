@@ -49,7 +49,7 @@ if(!$preload)
 {
     $kml->push("NetworkLinkControl");
     $kml->push("Update");
-    $kml->element("targetHref", "http://".$_SERVER["SERVER_ADDR"]."/geov/networklinks.php");
+    $kml->element("targetHref", "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"]."/geov/networklinks.php");
     $kml->push("Change");
     $kml->push("NetworkLink", array("targetId"=>"networklink_core"));
     $kml->element("flyToView", "0");
@@ -349,7 +349,7 @@ function realtime($stime, $ltime, $reload)
         $kml->push("NetworkLinkControl");
 
         $kml->push("Update");
-        $kml->element("targetHref", "http://".$_SERVER['SERVER_ADDR']."/geov/modules/core/ge_viewer.php");  // <kml><NetworkLinkControl><Update>
+        $kml->element("targetHref", "http://".$_SERVER['SERVER_ADDR'].":".$_SERVER["SERVER_PORT"]."/geov/modules/core/ge_viewer.php");  // <kml><NetworkLinkControl><Update>
 
         $kml->push("Change");
 
@@ -385,7 +385,7 @@ function realtime($stime, $ltime, $reload)
         
         $dur = $rv['p_vehicle_duration'];     
         $vcolor = $rv['p_vehicle_color'];
-        $vimage = "http://".$_SERVER['SERVER_ADDR']."/".$rv['vehicle_image'];
+        $vimage = "http://".$_SERVER['SERVER_ADDR'].":".$_SERVER["SERVER_PORT"]."/".$rv['vehicle_image'];
         
         $styleid = "linestyle".$vid;
 
