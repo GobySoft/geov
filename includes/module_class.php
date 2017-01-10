@@ -69,8 +69,10 @@ class Module
     
     function create($profileid, $profilename="", $profilemode="", $userid=0)
     {   
+        global $connection;
         $profilename = mysql_real_escape_string($profilename);
-        
+
+
         foreach ($this->base as $base_name => $base_value)
         {
             
@@ -126,6 +128,7 @@ class Module
 
     function unbind($cidarray)
     {
+        global $connection;
         if($cidarray)
         {
             
@@ -152,8 +155,9 @@ class Module
     
     
     function delete($profileid, $cidarray)
-    {
-        
+    { 
+        global $connection;
+       
         $this->unbind($cidarray);
 
         $query =
@@ -175,7 +179,7 @@ class Module
     
     function copy($profileid, $new_profileid, $new_userid)
     {
-        
+        global $connection;        
         
         // base_table
         $query =
@@ -251,7 +255,8 @@ class Module
         foreach($this->sub as $sub_name => $sub_array)
         {
         
-    
+            global $connection;        
+
             $query =
                 "SELECT * ".
                 "FROM ".$this->db.".".$this->name."_profile_".$sub_name." ".
@@ -315,6 +320,7 @@ class Module
     function veh_parameter_disp($profileid, $profilemode)
     {
         global $html;
+        global $connection;        
         
         if (!$this->vtable)
             return;
@@ -496,6 +502,7 @@ class Module
     function veh_parameter_save($profileid, $profilemode, $vehicleid)
     {
         $new_input = array();
+        global $connection;        
         
         foreach($this->vtable as $value)
         {
@@ -569,7 +576,8 @@ class Module
     function gen_parameter_disp($profileid, $profilemode)
     {
         global $html;
-        
+        global $connection;        
+
         if (!$this->gtable)
             return;
 
@@ -684,6 +692,7 @@ class Module
 
     function gen_parameter_save($profileid, $profilemode)
     {
+        global $connection;
         $save_value = array();
 
         if($this->gtable)
@@ -780,6 +789,7 @@ class Module
 
     function add_vehicle_row($profileid, $vehicleid, $new = false)
     {
+        global $connection;        
         if(!$this->vtable)
             return;
 
@@ -828,6 +838,7 @@ class Module
 //          "select" - display select option
     function profile_row($title, $alltitle, $result, $key, $input, $newsort, $sarray = array(), $style_array = array())
     {
+        global $connection;        
         global $html;
         
         $modulename = $this->name."_";
@@ -1115,6 +1126,7 @@ class Module
 
     function gen_bind($profileid, $last_ge_cid, $ip, $userid)
     {
+        global $connection;        
         
         // add/update the bindings
         $query =
@@ -1205,6 +1217,7 @@ class Module
 
     function find_closest_color_from_id($vehicleid)
     {
+        global $connection;        
         $name = mysql_get_single_value("SELECT vehicle_name FROM geov_core.core_vehicle WHERE vehicle_id = '$vehicleid'");
         
         $colorarray = array_values(colorarray());

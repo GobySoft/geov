@@ -946,6 +946,7 @@ function vid2name($vid)
 function profile_save($profileid)
 {
     global $html;
+    global $connection;    
     global $vehicleid;
     global $message;
     global $module_class;
@@ -1113,6 +1114,7 @@ function header_with_message($location = "")
 {
     global $message;
     global $cid;
+    global $connection;
     
     $query =
         "UPDATE core_connected ".

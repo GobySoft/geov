@@ -133,6 +133,8 @@ function token_parse($haystack, $needle, $pair_delimiter = ",", $key_delimiter =
 function instantiate_modules($profileid, $path = "./")
 {
     global $html;
+    global $connection;    
+
     $module = array("-1" => "modules/core/module.php");
 
     if($profileid)
@@ -355,7 +357,8 @@ function hexcolor2googlecolor(&$color, $key)
 
 function finduserfromip()
 {
-  
+    global $connection;    
+
     // check to see if we have information on this ip connection  
     $cip = $_SERVER['REMOTE_ADDR'];
     $query_con =
@@ -377,7 +380,6 @@ function finduserfromip()
         "  connected_lasttime ".
         "DESC";
 
-    global $connection;    
     $con = mysqli_query($connection,$query_con) or die(mysqli_error($connection));
   
     $userid = 0; 
@@ -395,7 +397,7 @@ function finduserfromip()
         
     }
   
-    return array($cid, $username, $userid, $message);
+   return array($cid, $username, $userid, $message);
   
 }
 
@@ -417,6 +419,7 @@ function geov_timestr($time)
     
 function update_connected_vehicles($module_class, $profileid, $userid, $all_bound_ips = array())
 {
+    global $connection;    
     // get all the previously bound ip addresses for this profile
     $query =
         "SELECT connected_ip ".
