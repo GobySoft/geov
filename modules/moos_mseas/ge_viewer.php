@@ -52,9 +52,9 @@ switch($pmode)
             "  geov_core.core_connected ".
             "WHERE ".
             "  connected_id = $cid";
-        $result = kml_mysql_query($query);
+        $result = kml_mysqli_query($connection,$query);
 
-        $row = mysql_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
 	  
         //0 = stopped, 1=playing, 2=paused, 3= step
         $status = $row[connected_playback];
@@ -70,9 +70,9 @@ switch($pmode)
             "  core_profile ".
             "WHERE ".
             "  profile_id = '$pid'";
-        $result = kml_mysql_query($query);
+        $result = kml_mysqli_query($connection,$query);
         
-        $row = mysql_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
 	  
         $rate = $row[profile_rate];
         $st = $row[profile_starttime];
@@ -137,7 +137,7 @@ function realtime($thistime)
 {
     global $pid;
     global $cid;
-    global $kml;
+    global $kml, $connection;
     global $sim_id;
     
     $query =
@@ -145,9 +145,9 @@ function realtime($thistime)
         "FROM geov_moos_mseas.moos_mseas_profile ".
         "WHERE profile_id = $pid";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
 
     $displaymseas = $row["profile_displaymseas"]; // bool
 

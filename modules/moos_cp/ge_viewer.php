@@ -52,9 +52,9 @@ switch($pmode)
             "  geov_core.core_connected ".
             "WHERE ".
             "  connected_id = $cid";
-        $result = kml_mysql_query($query);
+        $result = kml_mysqli_query($connection,$query);
 
-        $row = mysql_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
 	  
         //0 = stopped, 1=playing, 2=paused, 3= step
         $status = $row[connected_playback];
@@ -70,9 +70,9 @@ switch($pmode)
             "  core_profile ".
             "WHERE ".
             "  profile_id = '$pid'";
-        $result = kml_mysql_query($query);
+        $result = kml_mysqli_query($connection,$query);
         
-        $row = mysql_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
 	  
         $rate = $row[profile_rate];
         $st = $row[profile_starttime];
@@ -137,7 +137,7 @@ function realtime($thistime)
 {
     global $pid;
     global $cid;
-    global $kml;
+    global $kml, $connection;
     global $sim_id;
     
     
@@ -152,11 +152,11 @@ function realtime($thistime)
         "WHERE p_vehicle_profileid = $pid ".
         "AND p_vehicle_disp_cp = 1";
     
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
 
     $friend_name = array();
     
-    while($row = mysql_fetch_assoc($result))
+    while($row = mysqli_fetch_assoc($result))
     {
         $friend_name[] = $row['vehicle_name'];
     }
@@ -188,14 +188,14 @@ function realtime($thistime)
     
     
 
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
     
 
     
-    if(mysql_num_rows($result))
+    if(mysqli_num_rows($result))
     {      
         
-        $row = mysql_fetch_row($result);
+        $row = mysqli_fetch_row($result);
 
         // get rid of any offending last commas
         $cp_summary = chop($row[0], ",");
@@ -276,15 +276,15 @@ function realtime($thistime)
         "AND data_userid = $sim_id ".
         "ORDER BY data_time DESC";
 
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
 
-    if(!mysql_num_rows($result))
+    if(!mysqli_num_rows($result))
     {
         $kml->pop(); //</Document>
         return false;
     }
     
-    $row = mysql_fetch_row($result);
+    $row = mysqli_fetch_row($result);
 
     // get rid of any offending last | 
     $cp_summary = chop($row[0], "|");
@@ -348,9 +348,9 @@ function get_latlong($name, $thistime, $allowed_skew)
         "AND c_vehicle_connectedid = '$cid' ";  
     
     
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
     
-    $row = mysql_fetch_row($result);
+    $row = mysqli_fetch_row($result);
     return array($row[0], $row[1]);
 }
 
@@ -367,9 +367,9 @@ function get_color($name)
         "AND p_vehicle_profileid = '$pid' ".
         "LIMIT 1";
 
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
     
-    $row = mysql_fetch_row($result);
+    $row = mysqli_fetch_row($result);
     return $row[0];
     
 }

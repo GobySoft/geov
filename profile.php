@@ -92,10 +92,10 @@ switch($do)
          logout
         ************************************************************************************/
 
-        mysql_query("DELETE FROM core_connected ".
+        mysqli_query($connection,"DELETE FROM core_connected ".
                     "WHERE connected_ip = '".$_SERVER['REMOTE_ADDR']."' ".
                     "AND connected_client='".HTTP_CLIENT_ID."'")
-            or die(mysql_error());
+            or die(mysqli_error($connection));
 
         $userid = 0;
         header_with_message();
@@ -107,10 +107,10 @@ switch($do)
         /************************************************************************************
          allow the user to select a new profile
         ************************************************************************************/
-        mysql_query("UPDATE core_user ".
+        mysqli_query($connection,"UPDATE core_user ".
                     "SET user_active_profileid = 0 ".
                     "WHERE user_id = ".$userid)
-            or die(mysql_error());
+            or die(mysqli_error($connection));
 
         $profileid = 0;
         header_with_message();
@@ -127,10 +127,10 @@ switch($do)
         foreach($_POST['sort'] as $type => $value);
         
 
-        mysql_query("UPDATE core_profile ".
+        mysqli_query($connection,"UPDATE core_profile ".
                     "SET profile_sort = '".$type."' ".
                     "WHERE profile_id = ".$profileid)
-            or die(mysql_error());
+            or die(mysqli_error($connection));
 
              
         
@@ -166,9 +166,9 @@ switch($do)
             if (!mysql_get_num_rows($query_find))
             {
                 // no, create it
-                mysql_query("INSERT INTO core_user (user_name) ".
+                mysqli_query($connection,"INSERT INTO core_user (user_name) ".
                             "VALUES ('".$user_name."')")
-                    or die(mysql_error());
+                    or die(mysqli_error($connection));
                 $userid = mysql_insert_id();
             }
             else 
@@ -180,7 +180,7 @@ switch($do)
    
 
         // create a new connection
-        mysql_query("INSERT INTO ".
+        mysqli_query($connection,"INSERT INTO ".
                     "  core_connected ".
                     "   (connected_ip, ".
                     "    connected_userid, ".
@@ -189,7 +189,7 @@ switch($do)
                     "   ('".$_SERVER['REMOTE_ADDR']."', ".
                     "    '$userid', ".
                     "    '".HTTP_CLIENT_ID."')")
-            or die(mysql_error());
+            or die(mysqli_error($connection));
 
         list($cid, $username, $userid, $last_message) = finduserfromip();
 
@@ -249,7 +249,7 @@ switch($do)
             "UPDATE core_user ".
             "SET user_active_profileid = '$profileid' ".
             "WHERE user_id = '$userid'";
-        mysql_query($query) or die(mysql_error());
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
         
         header_with_message();
         break;
@@ -290,9 +290,9 @@ switch($do)
         $query =
             "SELECT connected_id FROM core_connected WHERE connected_profileid=$profileid";
 
-        $result = mysql_query($query) or die(mysql_error());
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
             
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {   
             $cidarray[] = $row["connected_id"];
         }
@@ -302,10 +302,10 @@ switch($do)
             $module->delete($profileid, $cidarray);
         }
 
-        mysql_query("UPDATE core_user ".
+        mysqli_query($connection,"UPDATE core_user ".
                     "SET user_active_profileid = 0 ".
                     "WHERE user_id = ".$userid)
-            or die(mysql_error());
+            or die(mysqli_error($connection));
         
 
         $profileid = 0;
@@ -328,11 +328,11 @@ switch($do)
             break;
         }
 
-        mysql_query("UPDATE core_profile ".
+        mysqli_query($connection,"UPDATE core_profile ".
                     "SET profile_name = '".$new_name."', ".
                     "    profile_mode = '".$new_type."' ".
                     "WHERE profile_id = ".$profileid)
-            or die(mysql_error());
+            or die(mysqli_error($connection));
 
         $message .= "profile renamed to '".$new_name."'.\n";
 
@@ -375,7 +375,7 @@ switch($do)
                 "REPLACE core_profile_module (p_module_profileid, p_module_moduleid) ".
                 "VALUES ('".$_POST['copy_module_profile']."','".$_POST['copy_module_name']."' )";
             
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
             
         }
         else
@@ -393,10 +393,10 @@ switch($do)
          toggles between showing simulated data and real data
         ************************************************************************************/
         
-        mysql_query("UPDATE core_profile ".
+        mysqli_query($connection,"UPDATE core_profile ".
                     "SET profile_simulation = !profile_simulation ".
                     "WHERE profile_id = ".$profileid)
-            or die(mysql_error());
+            or die(mysqli_error($connection));
 
         header_with_message();
         break;
@@ -438,11 +438,11 @@ if(!$userid)
         "SELECT user_id, user_name ".
         "FROM core_user ".
         "ORDER BY user_name ASC";
-    $users = mysql_query($query_users) or die(mysql_error());
+    $users = mysqli_query($connection,$query_users) or die(mysqli_error($connection));
 
     $value[0] = 0;
     $text[0] = "(choose existing user)";
-    while($row_users = mysql_fetch_assoc($users))
+    while($row_users = mysqli_fetch_assoc($users))
     {
         $value[] = $row_users['user_id'];
         $text[] = stripslashes($row_users['user_name']);
@@ -487,7 +487,7 @@ else if(!$profileid)
         "ORDER BY ".
         "  profile_name ".
         "ASC";
-    $result = mysql_query($query) or die(mysql_error());
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 
     $value_rt[0] = 0;
@@ -499,7 +499,7 @@ else if(!$profileid)
     $value_hist[0] = 0;
     $text_hist[0] = "(history saved profiles)";
 
-    while($row = mysql_fetch_assoc($result))
+    while($row = mysqli_fetch_assoc($result))
     {
         switch($row['profile_mode'])
         {
@@ -629,12 +629,12 @@ else
         "FROM core_connected ".
         "WHERE connected_profileid = $profileid";
     
-    $result = mysql_query($query) or die(mysql_error());
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-    if(mysql_num_rows($result))
+    if(mysqli_num_rows($result))
     {
         $html->push("p");        
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             $html->insert("&nbsp;&nbsp;&nbsp;");
             $html->input_checkbox("unbind[".$row["connected_ip"]."]", false);
@@ -674,9 +674,9 @@ else
         "WHERE vehicle_disabled = 0 ".
         "ORDER BY vehicle_name ASC";
     
-    $result = mysql_query($query) or die(mysql_error());
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-    while ($row = mysql_fetch_assoc($result))
+    while ($row = mysqli_fetch_assoc($result))
     {
         $v_name[] = $row['vehicle_name'];
         $v_id[] = $row['vehicle_id'];
@@ -689,9 +689,9 @@ else
         "FROM core_module ".
         "ORDER BY module_name ASC";
 
-    $result = mysql_query($query) or die(mysql_error());
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-    while ($row = mysql_fetch_assoc($result))
+    while ($row = mysqli_fetch_assoc($result))
     {
         $v_module[] = $row['module_name'];
         $v_module_id[] = $row['module_id'];
@@ -768,13 +768,13 @@ else
         "SELECT user_id, user_name ".
         "FROM core_user ".
         "ORDER BY user_name ASC";
-    $users = mysql_query($query_users) or die(mysql_error());
+    $users = mysqli_query($connection,$query_users) or die(mysqli_error($connection));
 
 
     $value = array();
     $value[0] = 0;
     $text[0] = "(choose user)";
-    while($row_users = mysql_fetch_assoc($users))
+    while($row_users = mysqli_fetch_assoc($users))
     {
         $value[] = $row_users['user_id'];
         $text[] = stripslashes($row_users['user_name']);
@@ -823,8 +823,8 @@ else
         "ORDER BY ".
         "  profile_mode, profile_name ".
         "ASC";
-    $result = mysql_query($query) or die(mysql_error());
-    while($row=mysql_fetch_assoc($result))
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    while($row=mysqli_fetch_assoc($result))
     {
         $value[] = $row["profile_id"];
         $text[] = $row["profile_name"]." (".$row["profile_mode"].")";
@@ -876,9 +876,10 @@ function findprofinfo($profileid)
         "FROM core_profile ".
         "WHERE profile_id = '$profileid'";
 
-    $result = mysql_query($query) or die(mysql_error());
+    global $connection;
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
   
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
   
     return array(stripslashes($row['profile_name']), $row['profile_mode'], $row['profile_simulation']);  
 }
@@ -989,7 +990,7 @@ function profile_save($profileid)
                         "WHERE p_module_moduleid = '".$mid."' ".
                         "AND p_module_profileid = ".$profileid;
                     
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                     
                     $query =
                         "INSERT INTO core_profile_module ".
@@ -997,7 +998,7 @@ function profile_save($profileid)
                         "VALUES ".
                         " ('$profileid', '$mid')";
                     
-                     mysql_query($query) or die(mysql_error());
+                     mysqli_query($connection,$query) or die(mysqli_error($connection));
 
                      $module_class = instantiate_modules($profileid);
                      
@@ -1007,9 +1008,9 @@ function profile_save($profileid)
                          "FROM core_profile_vehicle ".
                          "WHERE (p_vehicle_showimage = 1 OR p_vehicle_showtext = 1 OR p_vehicle_pt = 1 OR p_vehicle_line = 1 ) ".
                          "AND p_vehicle_profileid = '$profileid' ";
-                     $result = mysql_query($query) or die(mysql_error());
+                     $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
                      
-                     while($row = mysql_fetch_row($result))
+                     while($row = mysqli_fetch_row($result))
                          $module_class[$mid]->add_vehicle_row($profileid, $row[0]);
                      
                 }
@@ -1058,9 +1059,9 @@ function profile_save($profileid)
                 "AND ".
                 "  connected_client='".GE_CLIENT_ID."'";
             
-            $result = mysql_query($query) or die(mysql_error());
+            $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
             
-            while($row = mysql_fetch_assoc($result))
+            while($row = mysqli_fetch_assoc($result))
             {   
                 $cidarray[] = $row["connected_id"];
             }
@@ -1118,8 +1119,8 @@ function header_with_message($location = "")
         "SET connected_message = '".addslashes($message)."' ".
         "WHERE connected_id = '$cid'";
     
-    mysql_query($query)
-        or die(mysql_error());
+    mysqli_query($connection,$query)
+        or die(mysqli_error($connection));
     
     $location = ($location) ? "#".$location : "";
     

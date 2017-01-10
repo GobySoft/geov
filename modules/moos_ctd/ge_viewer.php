@@ -49,7 +49,7 @@ $kml->echo_kml();
 
 function ctd()
 {
-    global $kml;
+    global $kml, $connection;
     global $cid;
     global $pid;
     global $geodesy;
@@ -65,11 +65,11 @@ function ctd()
         "FROM geov_moos_ctd.moos_ctd_profile ".
         "WHERE profile_id = $pid";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
     
     
     
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
 
     if($row["profile_temp_enabled"])
     {

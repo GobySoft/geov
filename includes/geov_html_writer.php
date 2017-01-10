@@ -15,19 +15,20 @@ class geov_html_writer extends html_writer
 
     function navbar($this_page)
     {
-        
+        global $connection;
+
         $query =
             "SELECT page_name, page_uri ".
             "FROM core_page ".
             "ORDER BY page_id ASC";
         
-        $result = mysql_query($query) or die(mysql_error());
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
         $this->push("div");
         $this->push("span");
 
         $output = false;
-        while ($row = mysql_fetch_assoc($result))
+        while ($row = mysqli_fetch_assoc($result))
         {
             if($output)
                 $this->insert(" | ");

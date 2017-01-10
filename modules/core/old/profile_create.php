@@ -29,16 +29,16 @@ $query_insert =
     "    '".D_STARTTIME."',".
     "    '".D_ENDTIME."', ".
     "    '".D_RATE."')";
-mysql_query($query_insert) or die(mysql_error());
+mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
 $profileid = mysql_insert_id();       
 
 
 // insert profile_vehicle rows for all the known vehicles
 $query = "SELECT vehicle_id FROM core_vehicle";
-$result = mysql_query($query) or die(mysql_error());
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-while ($row = mysql_fetch_row($result))
+while ($row = mysqli_fetch_row($result))
 {
   $query = 
       "INSERT INTO ".
@@ -54,6 +54,6 @@ while ($row = mysql_fetch_row($result))
       "    '".D_DURATION."', ".
       "    '".D_SCALE."', ".
       "    '".D_COLOR."')";
-  mysql_query($query) or die(mysql_error());
+  mysqli_query($connection,$query) or die(mysqli_error($connection));
 }       
 ?>

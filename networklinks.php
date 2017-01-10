@@ -32,15 +32,15 @@ $query =
     "  connected_ip='$ip'";
 
  
-$result = mysql_query($query) or $kml->kerr(mysql_error(), true);
+$result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection), true);
 
 // if a connection, tell the modules we're refreshing
-$connection_set = mysql_num_rows($result);
+$connection_set = mysqli_num_rows($result);
 
 
 if($connection_set)
 {
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
     $pid = $row["connected_profileid"];
 
     $module_class = instantiate_modules($pid);
@@ -85,9 +85,9 @@ $query =
     "SELECT module_name, module_ge_viewer, module_refresh_time ".
     "FROM core_module";
 
-$result = mysql_query($query) or $kml->kerr(mysql_error());
+$result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection));
 
-while($row = mysql_fetch_assoc($result))
+while($row = mysqli_fetch_assoc($result))
 {
     
     $kml->push("NetworkLink");

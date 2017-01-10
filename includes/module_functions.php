@@ -4,6 +4,7 @@
 function establish_connection($modulename, $do_reload = true)
 {
     global $kml;
+    global $connection;
 
     $ip = $_SERVER["REMOTE_ADDR"];
 //establish connection information
@@ -43,7 +44,7 @@ function establish_connection($modulename, $do_reload = true)
         "  connected_ip='$ip'";
 
  
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
 
     $cid = null;
     $pid = null;
@@ -54,9 +55,9 @@ function establish_connection($modulename, $do_reload = true)
     $sim_id = null;
     
 // we have a profile associated with this ip
-    if(mysql_num_rows($result))
+    if(mysqli_num_rows($result))
     {
-        $row = mysql_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
         $cid = $row["connected_id"];
         $pid = $row["profile_id"];
         $pmode = $row["profile_mode"];

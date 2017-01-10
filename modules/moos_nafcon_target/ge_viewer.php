@@ -64,8 +64,8 @@ switch($pmode)
             "  geov_core.core_connected ".
             "WHERE ".
             "  connected_id = $cid";
-        $result = kml_mysql_query($query);
-        $row = mysql_fetch_assoc($result);
+        $result = kml_mysqli_query($connection,$query);
+        $row = mysqli_fetch_assoc($result);
 	  
         //0 = stopped, 1=playing, 2=paused, 3= step
         $status = $row["connected_playback"];
@@ -81,8 +81,8 @@ switch($pmode)
             "  core_profile ".
             "WHERE ".
             "  profile_id = '$pid'";
-        $result = kml_mysql_query($query);
-        $row = mysql_fetch_assoc($result);
+        $result = kml_mysqli_query($connection,$query);
+        $row = mysqli_fetch_assoc($result);
 	  
         $rate = $row[profile_rate];
         $st = $row[profile_starttime];
@@ -146,7 +146,7 @@ function realtime($thistime)
 {
     global $pid;
     global $cid;
-    global $kml;
+    global $kml, $connection;
 
     $kml->push("Document");
     
@@ -156,9 +156,9 @@ function realtime($thistime)
         "FROM geov_moos_nafcon_target.moos_nafcon_target_profile ".
         "WHERE profile_id = $pid";
     
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
 
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
 
     $display_target = $row["profile_display_target"];
     $decay = $row["profile_decay"];
@@ -178,15 +178,15 @@ function realtime($thistime)
         "ORDER BY data_time DESC";
     
 
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
 
     
-    if(mysql_num_rows($result))
+    if(mysqli_num_rows($result))
     {
         //$lookup_table = fetch_modem_lookup($modemlookup);
 
         $last_row = "";
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             //avoid dupes
             if ($row["data_value"] == $last_row)
@@ -249,7 +249,7 @@ function realtime($thistime)
 
 function get_latlong($name, $thistime)
 {
-    global $kml;
+    global $kml, $connection;
     
     $query =
         "SELECT data_lat, data_long ".
@@ -259,9 +259,9 @@ function get_latlong($name, $thistime)
         "AND data_time < $thistime ".
         "ORDER BY data_time DESC LIMIT 1";
     
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
     
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
     return array($row['data_lat'], $row['data_long']);
 }
 
@@ -270,7 +270,7 @@ function get_latlong($name, $thistime)
 function get_color($name)
 {
     global $pid;
-    global $kml;
+    global $kml, $connection;
     
     $query =
         "SELECT p_vehicle_color ".
@@ -280,9 +280,9 @@ function get_color($name)
         "AND p_vehicle_profileid = '$pid' ".
         "LIMIT 1";
 
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
     
-    $row = mysql_fetch_row($result);
+    $row = mysqli_fetch_row($result);
     return $row[0];
     
 }
@@ -291,7 +291,7 @@ function get_color($name)
 // set timestamps properly
 function update_mysql()
 {
-    global $kml;
+    global $kml, $connection;
 
     $last_id = mysql_get_single_value(
         "SELECT config_value FROM geov_moos_nafcon_target.moos_nafcon_target_config WHERE config_key = 'last_processed_id'"
@@ -306,9 +306,9 @@ function update_mysql()
         "SELECT data_id, data_value FROM geov_moos_nafcon_target.moos_nafcon_target_data ".
         "WHERE data_id > ".$last_id. " ORDER BY data_id ASC";
 
-    $result = kml_mysql_query($query);
+    $result = kml_mysqli_query($connection,$query);
 
-    while($row = mysql_fetch_assoc($result))
+    while($row = mysqli_fetch_assoc($result))
     {
         // extract the timestamp
         $timestamp = token_parse($row["data_value"], "Timestamp");
@@ -325,13 +325,13 @@ function update_mysql()
             "UPDATE geov_moos_nafcon_target.moos_nafcon_target_data ".
             "SET data_time = '".$timestamp."' WHERE data_id = ".$row["data_id"];    
 
-        kml_mysql_query($query);
+        kml_mysqli_query($connection,$query);
 
         $max_id = $row["data_id"];
     }
     
     $query = "REPLACE geov_moos_nafcon_target.moos_nafcon_target_config(config_key, config_value) VALUES ('last_processed_id','".$max_id."')";
-    kml_mysql_query($query);
+    kml_mysqli_query($connection,$query);
 }
 
 
@@ -340,7 +340,7 @@ function update_mysql()
 // array(modem_id => array("name" => name, "type" => type), etc...)
 function fetch_modem_lookup($file_location)
 {
-    global $kml;
+    global $kml, $connection;
 
     $lookup_table = array();
     
@@ -369,7 +369,7 @@ function fetch_modem_lookup($file_location)
 // display a status message
 function display_status($message, $lookup, $decay_percent)
 {
-    global $kml;
+    global $kml, $connection;
 
     $platform = token_parse($message, "SourcePlatformId");
     $t = token_parse($message, "Timestamp");
@@ -378,7 +378,7 @@ function display_status($message, $lookup, $decay_percent)
 // display a contact message
 function display_contact($type, $message, $lookup, $decay_percent)
 {
-    global $kml;
+    global $kml, $connection;
             
     switch($type)
     {
@@ -415,7 +415,7 @@ function display_contact($type, $message, $lookup, $decay_percent)
 // display a track message
 function display_track($type, $message, $lookup, $decay_percent)
 {
-    global $kml;
+    global $kml, $connection;
 
     switch($type)
     {
@@ -453,7 +453,7 @@ function display_track($type, $message, $lookup, $decay_percent)
 // display an active contact message
 function display_active_contact($type, $message, $lookup, $decay_percent)
 {
-    global $kml;    
+    global $kml, $connection;    
     
 
     $platform = token_parse($message, "platform_id");
@@ -522,7 +522,7 @@ function display_active_contact($type, $message, $lookup, $decay_percent)
 // display a range track message
 function display_range_track($type, $message, $lookup, $decay_percent)
 {
-    global $kml;    
+    global $kml, $connection;    
 
     $platform = token_parse($message, "platform_id");
 

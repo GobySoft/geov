@@ -116,7 +116,7 @@ class Module
             $query_insert .= ")";
             
             
-            mysql_query($query_insert) or die(mysql_error());
+            mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
             $profileid = mysql_insert_id();
         }
@@ -136,7 +136,7 @@ class Module
                     "DELETE FROM ".$this->db.".".$this->name."_connected ".
                     "WHERE connected_id=$cid";
                 
-                mysql_query($query) or die(mysql_error());
+                mysqli_query($connection,$query) or die(mysqli_error($connection));
                 
                 if($this->name == "core")
                 {
@@ -144,7 +144,7 @@ class Module
                     $query =
                         "DELETE FROM core_connected_vehicle ".
                         "WHERE c_vehicle_connectedid=$cid";
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                 }
             }
         }
@@ -159,14 +159,14 @@ class Module
         $query =
             "DELETE FROM ".$this->db.".".$this->name."_profile ".
             "WHERE profile_id=$profileid";
-        mysql_query($query) or die(mysql_error());
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
         
         foreach($this->sub as $key=>$value)
         {            
             $query =
                 "DELETE FROM ".$this->db.".".$this->name."_profile_".$key." ".
                 "WHERE p_".$key."_profileid=$profileid";
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
         }
         
     }
@@ -184,9 +184,9 @@ class Module
             "WHERE profile_id = ".$profileid;
 
     
-        $result = mysql_query($query) or die(mysql_error());
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-        $row = mysql_fetch_array($result, MYSQL_ASSOC);
+        $row = mysqli_fetch_array($result, MYSQL_ASSOC);
 
         $query_insert = "REPLACE ".$this->db.".".$this->name."_profile(";
 
@@ -239,7 +239,7 @@ class Module
 
 
         //        echo($query_insert."<br>");        
-        mysql_query($query_insert) or die(mysql_error());
+        mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
         $new_profileid = mysql_insert_id();
     
@@ -256,9 +256,9 @@ class Module
                 "SELECT * ".
                 "FROM ".$this->db.".".$this->name."_profile_".$sub_name." ".
                 "WHERE ".$base_abbrev."_".$sub_name."_profileid = ".$profileid;
-            $result = mysql_query($query);
+            $result = mysqli_query($connection,$query);
         
-            while($row = mysql_fetch_array($result, MYSQL_ASSOC))
+            while($row = mysqli_fetch_array($result, MYSQL_ASSOC))
             {
             
                 $query_insert =
@@ -303,7 +303,7 @@ class Module
                 $query_insert .= "')";
 
                 //                echo($query_insert."<br>");            
-                mysql_query($query_insert) or die(mysql_error());
+                mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
             }
 
@@ -384,10 +384,11 @@ class Module
             "ORDER BY ".
             $sortstr;
 
-        
-        $result = mysql_query($query) or die(mysql_error());
 
-        if(mysql_num_rows($result) == 0)
+        global $connection;        
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+
+        if(mysqli_num_rows($result) == 0)
         {
             if($this->name == "core")
                 $html->p("(no vehicles selected for display)", array("class"=>"red"));
@@ -396,7 +397,7 @@ class Module
         }
         
         
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             $this->add_vehicle_row($profileid, $row['vehicle_id']);   
         }
@@ -428,8 +429,8 @@ class Module
 
         if ($i)
         {
-            $result_radio = mysql_query($query_radio) or die (mysql_error());
-            $row_radio = mysql_fetch_assoc($result_radio);
+            $result_radio = mysqli_query($connection,$query_radio) or die (mysqli_error($connection));
+            $row_radio = mysqli_fetch_assoc($result_radio);
         }
 
 
@@ -561,7 +562,7 @@ class Module
             "p_vehicle_vehicleid='$vehicleid'";
         
         if ($new_input)
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
     }
 
 
@@ -608,10 +609,11 @@ class Module
             "  profile_id = '$profileid'";
         
         
-        $result = mysql_query($query) or die(mysql_error());
+        global $connection;        
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
         
-        $row = mysql_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
 
         
         $html->push("table");
@@ -770,7 +772,7 @@ class Module
             "profile_id = '".$profileid."'";
 
         
-        mysql_query($query) or die(mysql_error());
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 
     }
@@ -809,7 +811,8 @@ class Module
             $query .=
                 "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
 
-        mysql_query($query) or die(mysql_error());
+        global $connection;        
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
         
         
     }
@@ -829,8 +832,8 @@ class Module
         
         $modulename = $this->name."_";
         
-        if(mysql_num_rows($result))    
-            mysql_data_seek($result, 0);
+        if(mysqli_num_rows($result))    
+            mysqli_data_seek($result, 0);
 
         if ($input != "hidden")
         {
@@ -920,7 +923,7 @@ class Module
 
 
         $column_count = 0;
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             // determine the coloring
             $column_count++;
@@ -1146,7 +1149,7 @@ class Module
             "'1') ";
 
 
-        mysql_query($query) or die(mysql_error());
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
 
         
         return mysql_insert_id();
@@ -1163,11 +1166,11 @@ class Module
     
     function set_reload($profileid)
     {
-
+        global $connection;
         if($this->name == "core")
         {
             $query = "UPDATE geov_core.core_connected SET connected_reload = 1 WHERE connected_profileid=$profileid";
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
         }
         else
         {
@@ -1175,9 +1178,9 @@ class Module
                 "   FROM geov_core.core_connected ".
                 "   WHERE geov_core.core_connected.connected_profileid=$profileid";
 
-            $result = mysql_query($query) or die(mysql_error());
+            $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
             
-            while($row = mysql_fetch_assoc($result))
+            while($row = mysqli_fetch_assoc($result))
             {
                 $cid = $row["connected_id"];
                 
@@ -1192,7 +1195,7 @@ class Module
                         "VALUES ( ".
                         "  '$cid', ".
                         "   '1')";
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                 }
             }
         }

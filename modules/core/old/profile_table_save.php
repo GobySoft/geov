@@ -40,9 +40,9 @@ $query =
  WHERE p_vehicle_vehicleid = $vehicleid
  AND p_vehicle_profileid = $profileid";
 
-$result = mysql_query($query) or die(mysql_error());
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-if(!mysql_num_rows($result))
+if(!mysqli_num_rows($result))
 {
   $query = "INSERT INTO
               core_profile_vehicle
@@ -50,7 +50,7 @@ if(!mysql_num_rows($result))
             VALUES
                 ('$profileid','$vehicleid')";
   
-  mysql_query($query) or die(mysql_error());
+  mysqli_query($connection,$query) or die(mysqli_error($connection));
 }
 
 // do the query
@@ -70,7 +70,7 @@ $query =
  AND
    p_vehicle_vehicleid='$vehicleid'";
 
-mysql_query($query) or die(mysql_error());
+mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 
 ?>

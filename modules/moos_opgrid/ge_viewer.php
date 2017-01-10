@@ -56,7 +56,7 @@ $kml->echo_kml();
 
 function opgrid()
 {
-    global $kml;
+    global $kml, $connection;
     global $cid;
     global $pid;
     global $geodesy;
@@ -72,9 +72,9 @@ function opgrid()
         "FROM geov_moos_opgrid.moos_opgrid_profile ".
         "WHERE profile_id = $pid";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
 
     $displayop = $row["profile_displayop"]; // bool
     $opbox_xy = $row["profile_opbox"]; // x1,y1:x2,y2
@@ -289,13 +289,13 @@ function opgrid()
         "SET connected_reload = 0 ".
         "WHERE connected_id = $cid";
     
-    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
 }
 
 function define_styles()
 {
-    global $kml;
+    global $kml, $connection;
     
     //define styles
     $kml->push("Style", array("id"=>"moos_opgrid_opboxstyle"));
@@ -375,7 +375,7 @@ function define_styles()
 
 function make_grid($gridspacing, $min, $max, $datum, $style, $label)
 {
-    global $kml;
+    global $kml, $connection;
     global $geodesy;
     
     
@@ -480,7 +480,7 @@ function make_grid($gridspacing, $min, $max, $datum, $style, $label)
 
 function plot_markers($markers, $datum)
 {
-    global $kml;
+    global $kml, $connection;
     global $geodesy;
 
     $kml->push("Folder", array("id" => "markers_folder"));
@@ -514,6 +514,7 @@ function read_viewobjects()
 {
     global $sim_id;
     global $pid;
+    global $connection;
     
     $query =
         "SELECT data_value ".
@@ -523,12 +524,12 @@ function read_viewobjects()
         "AND data_time >= UNIX_TIMESTAMP()-".POLY_EXPIRE." ".
         "ORDER BY data_id DESC LIMIT 10";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
     $is_new_viewobject = false;
 
     $new_viewpolygons = array();
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         $new_viewpolygon = $row[0];
         // active,true:label,unicorn_DEPLOY:edge_size,0:vertex_size,0:3000,4200:3710,4910:3850,4770:3140,4060:3000,4200:3000,4200:3000,4200:3000,4200:3000,4200
@@ -555,9 +556,9 @@ function read_viewobjects()
         "SELECT p_vehicle_vehicleid FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
         "WHERE p_vehicle_profileid = '$pid'";
 
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         if(!array_key_exists($row[0], $new_viewpolygons))
             $new_viewpolygons[$row[0]] = " ";
@@ -577,7 +578,7 @@ function read_viewobjects()
 
 
             
-            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+            mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
             $is_new_viewobject = true;
         }
@@ -592,10 +593,10 @@ function read_viewobjects()
         "AND data_time >= UNIX_TIMESTAMP()-".POINT_EXPIRE." ".
         "ORDER BY data_id DESC LIMIT 20";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
     $new_viewpoints = array();
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         $new_viewpoint = $row[0];
         //std::string: active,true:label,unicorn_waypoint:type,waypoint:source,unicorn_waypoint:3849,4766
@@ -633,9 +634,9 @@ function read_viewobjects()
         "SELECT p_vehicle_vehicleid FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
         "WHERE p_vehicle_profileid = '$pid'";
 
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         if(!array_key_exists($row[0], $new_viewpoints))
             $new_viewpoints[$row[0]] = " ";
@@ -653,7 +654,7 @@ function read_viewobjects()
                 "SET p_vehicle_viewpoint = '$new_viewpoint' ".
                 "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
             
-            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+            mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
             
             $is_new_viewobject = true;
         }
@@ -665,7 +666,7 @@ function read_viewobjects()
 
 function plot_viewpoint($datum)
 {
-    global $kml;
+    global $kml, $connection;
     global $pid;
     global $geodesy;
     
@@ -674,10 +675,10 @@ function plot_viewpoint($datum)
     
     $query = "SELECT p_vehicle_viewpoint FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_profileid = '$pid'";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
     
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         //std::string: active,true:label,unicorn_waypoint:type,waypoint:source,unicorn_waypoint:3849,4766
 
@@ -708,7 +709,7 @@ function plot_viewpoint($datum)
 function plot_viewpolygon($datum)
 {
     
-    global $kml;
+    global $kml, $connection;
     global $pid;
     global $geodesy;
     
@@ -717,9 +718,9 @@ function plot_viewpolygon($datum)
     
     $query = "SELECT p_vehicle_viewpolygon FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_profileid = '$pid'";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         // active,true:label,unicorn_DEPLOY:edge_size,0:vertex_size,0:3000,4200:3710,4910:3850,4770:3140,4060:3000,4200:3000,4200:3000,4200:3000,4200:3000,4200
 
@@ -762,7 +763,7 @@ function plot_viewpolygon($datum)
 
 function autoshow($enabled, $expand, $grid, $datum)
 {
-    global $kml;
+    global $kml, $connection;
     global $cid;
     global $pid;
     global $sim_id;
@@ -808,9 +809,9 @@ function autoshow($enabled, $expand, $grid, $datum)
             "AND vehicle_disabled = 0";
         
         
-        $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
         
-        while($row = mysql_fetch_row($result))
+        while($row = mysqli_fetch_row($result))
         {
             $something_to_display_vid[] = $row[0];
         }
@@ -829,10 +830,10 @@ function autoshow($enabled, $expand, $grid, $datum)
         "WHERE $tbl_op_pv.p_vehicle_profileid = $pid ".
         "AND (p_vehicle_showimage = 1 OR p_vehicle_showtext = 1 OR p_vehicle_pt = 1 OR p_vehicle_line = 1 ) ";
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
     $on_screen_vid = array(); // on the screen
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         $on_screen_vid[] = $row[0];
     }
@@ -845,12 +846,12 @@ function autoshow($enabled, $expand, $grid, $datum)
         "AND $tbl_op_pv.p_vehicle_profileid = $pid ".
         "WHERE p_vehicle_auto = 1 OR p_vehicle_auto IS NULL";
 
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
 
     
     $managed_by_autoshow = array(); // managed_by_autoshow
-    while($row = mysql_fetch_row($result))
+    while($row = mysqli_fetch_row($result))
     {
         $managed_by_autoshow[] = $row[0];
     }
@@ -883,7 +884,7 @@ function autoshow($enabled, $expand, $grid, $datum)
                         "INSERT INTO geov_moos_opgrid.moos_opgrid_profile_vehicle(p_vehicle_profileid, p_vehicle_vehicleid, p_vehicle_auto) ".
                         "VALUES('$pid', '$vid', '1') ON DUPLICATE KEY UPDATE p_vehicle_auto = '1'  ";
                     
-                    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+                    mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
                 }
             }
         }
@@ -899,13 +900,13 @@ function autoshow($enabled, $expand, $grid, $datum)
                 "    p_vehicle_line = '0' ".
                 "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
 
-            mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+            mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
         }
 
         update_connected_vehicles($module_class, $pid, $sim_id);
         
         $query = "UPDATE geov_core.core_connected SET connected_reload = 1 WHERE connected_profileid='$pid'";
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
         
     }
     

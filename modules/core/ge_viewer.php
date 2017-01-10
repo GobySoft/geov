@@ -69,7 +69,7 @@ if(!$fly_to)
         "  connected_lasttime = $thistime ".
         "WHERE ".
         "  connected_id = $cid";
-    kml_mysql_query($query);
+    kml_mysqli_query($connection,$query);
 }
 
 // debugging feature if GET is passed with full=true then give entire output
@@ -101,8 +101,8 @@ switch($pmode)
             "  core_connected ".
             "WHERE ".
             "  connected_id = $cid";
-        $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-        $row = mysql_fetch_assoc($result);
+        $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+        $row = mysqli_fetch_assoc($result);
 	  
         //0 = stopped, 1=playing, 2=paused, 3=step
         $status = $row['connected_playback'];
@@ -118,8 +118,8 @@ switch($pmode)
             "  core_profile ".
             "WHERE ".
             "  profile_id = '$pid'";
-        $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-        $row = mysql_fetch_assoc($result);
+        $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+        $row = mysqli_fetch_assoc($result);
 	  
         $rate = $row['profile_rate'];
         $st = $row['profile_starttime'];
@@ -137,7 +137,7 @@ switch($pmode)
                     "  connected_playback=2 ".
                     "WHERE ".
                     "  connected_id = $cid";
-                mysql_query($query) or die(mysql_error());
+                mysqli_query($connection,$query) or die(mysqli_error($connection));
                 realtime($st, $st, true);	  
             }
             else
@@ -167,7 +167,7 @@ switch($pmode)
                         "  connected_playback=2 ".
                         "WHERE ".
                         "  connected_id = $cid";
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                 }
                 // step the number of times rate that $step is (in seconds)
                 $new_count = $count + $rate*$step;
@@ -195,7 +195,7 @@ switch($pmode)
                     "  connected_playbackcount = '".$new_count."' ".
                     "WHERE ".
                     "  connected_id = $cid";
-                mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+                mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
             }
             
             if($new_count < $count)
@@ -243,7 +243,7 @@ function realtime($stime, $ltime, $reload)
     global $cid;
     global $new_maxdid;
     global $script_begin;
-    global $kml;
+    global $kml, $connection;
     global $sim_id;
     
     
@@ -298,11 +298,11 @@ function realtime($stime, $ltime, $reload)
         "ORDER BY ".
         "  vehicle_name ASC";
 
-    $result_vehicle = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);    
+    $result_vehicle = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);    
     
     if(!$reload)
     {
-        while($row = mysql_fetch_assoc($result_vehicle))
+        while($row = mysqli_fetch_assoc($result_vehicle))
 	{
             // quick query to check if there is any data to add on screen
             $query =
@@ -314,8 +314,8 @@ function realtime($stime, $ltime, $reload)
                 "AND data_userid = $sim_id ".
                 "LIMIT 1";
                         
-            $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-            $num_rows = mysql_num_rows($result);
+            $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+            $num_rows = mysqli_num_rows($result);
 
             
             if($num_rows)
@@ -331,7 +331,7 @@ function realtime($stime, $ltime, $reload)
             
 	}
     }
-    @mysql_data_seek($result_vehicle, 0);
+    @mysqli_data_seek($result_vehicle, 0);
 
     
     if($reload)
@@ -363,7 +363,7 @@ function realtime($stime, $ltime, $reload)
         
     }
 
-    while ($rv = mysql_fetch_assoc($result_vehicle))
+    while ($rv = mysqli_fetch_assoc($result_vehicle))
     {
         $vid = $rv['p_vehicle_vehicleid'];
         $vname = $rv['vehicle_name'];
@@ -470,7 +470,7 @@ function realtime($stime, $ltime, $reload)
         "SET connected_lastdataid = '$new_maxdid' ".
         "WHERE connected_id = '$cid'";
 
-    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 }
 
 // does a fresh import to the google earth viewer
@@ -480,7 +480,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
     global $new_maxdid;
     global $pid;
     global $cid;
-    global $kml;
+    global $kml, $connection;
     global $sim_id;    
     
     $query_data =
@@ -504,12 +504,12 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
         "ORDER BY ".
         "  data_time ASC";
 
-    $data = mysql_query($query_data) or $kml->kerr(mysql_error()."\n".$query_data);
-    $num_rows = mysql_num_rows($data);
+    $data = mysqli_query($connection,$query_data) or $kml->kerr(mysqli_error($connection)."\n".$query_data);
+    $num_rows = mysqli_num_rows($data);
 	  
     if($num_rows)
     {
-        while($row_data = mysql_fetch_assoc($data))
+        while($row_data = mysqli_fetch_assoc($data))
 	{
             $veh_time[] = $row_data['data_time'];
             $veh_lat[] = $row_data['data_lat'];
@@ -530,7 +530,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
             "SET connected_lastdataid = '$new_maxdid' ".
             "WHERE connected_id = '$cid'";
         
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
         
         $ilast = count($veh_id)-1;
         
@@ -635,7 +635,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
             "AND c_vehicle_connectedid='$cid'";
 
                 
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
         update_lastdid($veh_id[$ilast], $cid, $vid);
         unset($veh_time, $veh_lat, $veh_lon, $veh_hdg, $veh_spd, $veh_depth, $veh_id);	      
@@ -656,7 +656,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
             "SET c_vehicle_onscreen=0 ".
             "WHERE c_vehicle_vehicleid='$vid' ".
             "AND c_vehicle_connectedid='$cid'";
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
     }
 
@@ -666,7 +666,7 @@ function realtime_full($vid, $styleid, $vname, $vtype, $vscale, $vshow, $vloa, $
         "UPDATE core_connected ".
         "SET connected_reload='0' ".
         "WHERE connected_id='$cid'";
-    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
     
     $kml->list_style($vcolor, "liststyle".$vid);
@@ -686,7 +686,7 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
     global $pid;
     global $cid;
     global $script_begin;
-    global $kml;
+    global $kml, $connection;
     global $sim_id;
     
     /*
@@ -697,8 +697,8 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         "WHERE data_time >= ".($stime-$dur)." ".
         "AND data_time < ".($stime)." ".
         "AND data_vehicleid = '".$vid."'";
-    $result = mysql_query($query) or kerr(mysql_error(), true);
-    $num_rows = mysql_num_rows($result);
+    $result = mysqli_query($connection,$query) or kerr(mysqli_error($connection), true);
+    $num_rows = mysqli_num_rows($result);
     */
 
     
@@ -710,8 +710,8 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
 
 
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-    $row = mysql_fetch_assoc($result);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+    $row = mysqli_fetch_assoc($result);
 
     if(!$vonscreen && $row['c_vehicle_onscreen'])
     {
@@ -721,7 +721,7 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
             "WHERE c_vehicle_vehicleid='$vid' ".
             "AND c_vehicle_connectedid='$cid'";
         
-        mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+        mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
         
         $kml->push("Delete");
         
@@ -776,8 +776,8 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         "  data_time ASC";
 
     
-    $res_add = mysql_query($query_add) or $kml->kerr(mysql_error()."\n".$query_add);
-    $add_rows = mysql_num_rows($res_add);    
+    $res_add = mysqli_query($connection,$query_add) or $kml->kerr(mysqli_error($connection)."\n".$query_add);
+    $add_rows = mysqli_num_rows($res_add);    
     
     //remove the values we've seen, but make sure we've displayed it
     $query_del =
@@ -793,14 +793,14 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
         "  data_time ASC";
 
     
-    $res_del = mysql_query($query_del) or $kml->kerr(mysql_error()."\n".$query_del);
-    $del_rows = mysql_num_rows($res_del);
+    $res_del = mysqli_query($connection,$query_del) or $kml->kerr(mysqli_error($connection)."\n".$query_del);
+    $del_rows = mysqli_num_rows($res_del);
 
 
         if($del_rows)
     {
 
-        while($rd = mysql_fetch_assoc($res_del))
+        while($rd = mysqli_fetch_assoc($res_del))
 	{
             $veh_id[] = $rd['data_id'];
 	}
@@ -824,7 +824,7 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
     if($add_rows)
     {
         
-        while($ra = mysql_fetch_assoc($res_add))
+        while($ra = mysqli_fetch_assoc($res_add))
 	{
             $veh_time[] = $ra['data_time'];
             $veh_lat[] = $ra['data_lat'];
@@ -867,8 +867,8 @@ function realtime_incremental($vid, $styleid, $vname, $vtype, $vscale, $vshow, $
                 "AND data_userid = $sim_id ORDER BY data_time DESC LIMIT 1";
 
             
-            $res_last_point = mysql_query($query_last_point) or $kml->kerr(mysql_error()."\n".$query_last_point);
-            $row_last_point = mysql_fetch_assoc($res_last_point);
+            $res_last_point = mysqli_query($connection,$query_last_point) or $kml->kerr(mysqli_error($connection)."\n".$query_last_point);
+            $row_last_point = mysqli_fetch_assoc($res_last_point);
             
             $veh_lat[-1] = $row_last_point['data_lat'];
             $veh_lon[-1] = $row_last_point['data_long'];
@@ -993,7 +993,7 @@ function realtime_lookat($stime)
 {
     global $pid;
     global $cid;
-    global $kml;
+    global $kml, $connection;
     global $sim_id;
     
     
@@ -1002,8 +1002,8 @@ function realtime_lookat($stime)
         "FROM core_profile ".
         "WHERE profile_id = $pid";
   
-    $result = mysql_query($query) or die(mysql_error());
-    $row = mysql_fetch_row($result);
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    $row = mysqli_fetch_row($result);
     $vfid = $row[0];
     $followhdg = $row[1];
     
@@ -1017,8 +1017,8 @@ function realtime_lookat($stime)
             "FROM core_profile_vehicle ".
             "WHERE p_vehicle_profileid='$pid' ".
             "AND p_vehicle_vehicleid = '$vfid'";
-        $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query); 
-        $row = mysql_fetch_row($result);
+        $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query); 
+        $row = mysqli_fetch_row($result);
         $dur = $row[0];
 
         $query =
@@ -1029,13 +1029,13 @@ function realtime_lookat($stime)
             "AND data_vehicleid = '".$vfid."' ".
             "AND data_userid = $sim_id ".
             "ORDER BY data_time DESC LIMIT 1";
-        $result = mysql_query($query) or die(mysql_error());
-        $num_rows = mysql_num_rows($result);
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+        $num_rows = mysqli_num_rows($result);
 
         if($num_rows)
 	{
             $camera = explode(",", $_GET['CAMERA']);
-            $row = mysql_fetch_row($result);
+            $row = mysqli_fetch_row($result);
 
             $heading = ($followhdg) ? $row[2] : $camera[4];
 
@@ -1049,8 +1049,8 @@ function realtime_lookat($stime)
                 "SELECT connected_lastrange, connected_lasttilt ".
                 "FROM core_connected ".
                 "WHERE connected_id = '$cid'";
-            $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-            $row = mysql_fetch_row($result);
+            $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+            $row = mysqli_fetch_row($result);
 
             $lastrange = $row[0];
             $lasttilt = $row[1];
@@ -1069,7 +1069,7 @@ function realtime_lookat($stime)
                     "UPDATE core_connected ".
                     "SET connected_lastrange='".$newrange."', connected_lasttilt='".$newtilt."' ".
                     "WHERE connected_id='$cid'";
-                mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+                mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
                 $range = $newrange-$altitude/cos(deg2rad($camera[3]));        
                 $tilt = $newtilt;
             }
@@ -1108,7 +1108,7 @@ function history()
     global $pid;
     global $cid;
     global $pname;
-    global $kml;
+    global $kml, $connection;
     global $sim_id;
     
     
@@ -1138,8 +1138,8 @@ function history()
         "  core_profile ".
         "WHERE ".
         "  profile_id = '$pid'";
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-    $row = mysql_fetch_assoc($result);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+    $row = mysqli_fetch_assoc($result);
     
     $st = $row['profile_starttime'];
     $et = $row['profile_endtime'];
@@ -1160,9 +1160,9 @@ function history()
         "AND data_userid = $sim_id ";
     
 
-    $result_prelim = mysql_query($query_prelim) or $kml->kerr(mysql_error()."\n".$query_prelim);
+    $result_prelim = mysqli_query($connection,$query_prelim) or $kml->kerr(mysqli_error($connection)."\n".$query_prelim);
     
-    $num_rows = mysql_num_rows($result_prelim);
+    $num_rows = mysqli_num_rows($result_prelim);
     
     
 // based on the density of points allowed ($point_limit) set the time spacing between points
@@ -1192,13 +1192,13 @@ function history()
         "ORDER BY ".
         "  vehicle_name ASC";
     
-    $result_vehicle = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    $result_vehicle = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
 
     // debugging
     $object_count = 0;
     
-    while($rv = mysql_fetch_assoc($result_vehicle))
+    while($rv = mysqli_fetch_assoc($result_vehicle))
     {
         $vid = $rv['p_vehicle_vehicleid'];
         $vname = $rv['vehicle_name'];
@@ -1241,14 +1241,14 @@ function history()
         
 
 
-        $data = mysql_query($query_data) or $kml->kerr(mysql_error()."\n".$query_data);
-        $num_rows = mysql_num_rows($data);
+        $data = mysqli_query($connection,$query_data) or $kml->kerr(mysqli_error($connection)."\n".$query_data);
+        $num_rows = mysqli_num_rows($data);
 
         $object_count += $num_rows;
         
         if($num_rows)
         {
-            while($row_data = mysql_fetch_assoc($data))
+            while($row_data = mysqli_fetch_assoc($data))
             {
                 $veh_time[] = $row_data['data_time'];
                 $veh_lat[] = $row_data['data_lat'];
@@ -1322,13 +1322,13 @@ function history()
         "UPDATE core_connected ".
         "SET connected_reload='0' ".
         "WHERE connected_id='$cid'";
-    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
         
 }
 
 function update_lastdid($id, $cid, $vid)
 {
-    global $kml;
+    global $kml, $connection;
     
     $query =
         "UPDATE core_connected_vehicle ".
@@ -1336,12 +1336,12 @@ function update_lastdid($id, $cid, $vid)
         "WHERE c_vehicle_vehicleid='$vid' ".
         "AND c_vehicle_connectedid='$cid'";
 
-    mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
+    mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 }
 
 function pull_lastinfo($cid, $vid)
 {
-    global $kml;
+    global $kml, $connection;
     $query =
         "SELECT data_time, data_lat, data_long, data_heading, data_speed, data_depth ".
         "FROM core_data ".
@@ -1350,8 +1350,8 @@ function pull_lastinfo($cid, $vid)
         "AND c_vehicle_connectedid='$cid'";
     
     
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n".$query);
-    $row = mysql_fetch_assoc($result);
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+    $row = mysqli_fetch_assoc($result);
 
     return array($row["data_time"], $row["data_lat"], $row["data_long"], $row["data_heading"], $row["data_speed"], $row["data_depth"]);
 

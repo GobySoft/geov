@@ -60,7 +60,7 @@ list($e_y, $e_mo, $e_d, $e_h, $e_mi, $e_s) = sscanf($history_stop, "%4d-%2d-%2d 
 
 $query_prelim = "SELECT * FROM ge_data, ge_vehicle, ge_cruise WHERE data_cruiseid = cruise_id AND data_vehicleid = vehicle_id AND data_time > ".gmmktime($s_h,$s_mi,$s_s,$s_mo,$s_d,$s_y)." AND data_time < ".gmmktime($e_h,$e_mi,$e_s,$e_mo,$e_d,$e_y)." ORDER BY vehicle_id, data_time ASC";
 
-$num_rows = mysql_num_rows(mysql_query($query_prelim)) or die(mysql_error());
+$num_rows = mysqli_num_rows(mysqli_query($connection,$query_prelim)) or die(mysqli_error($connection));
 
 // based on the density of points allowed ($point_limit) set the time spacing between points
 // assuming a minimum time spacing of one second
@@ -69,9 +69,9 @@ $time_gap = ceil($num_rows/$point_limit);
 
 $query_data = "SELECT * FROM ge_data, ge_vehicle, ge_cruise WHERE data_cruiseid = cruise_id AND data_vehicleid = vehicle_id AND data_time > ".gmmktime($s_h,$s_mi,$s_s,$s_mo,$s_d,$s_y)." AND data_time < ".gmmktime($e_h,$e_mi,$e_s,$e_mo,$e_d,$e_y)." AND MOD(FLOOR(data_time), ".$time_gap.") = 0 ORDER BY vehicle_id, data_time ASC";
 
-$data = mysql_query($query_data) or die(mysql_error());
+$data = mysqli_query($connection,$query_data) or die(mysqli_error($connection));
 
-$num_rows = mysql_num_rows($data);
+$num_rows = mysqli_num_rows($data);
 
 $current_vehicle = 0;
 $last_time = 0;
@@ -83,7 +83,7 @@ $alpha = 255;
 
 $set = 1;
 
-while($row_data = mysql_fetch_assoc($data))
+while($row_data = mysqli_fetch_assoc($data))
 {
   
 

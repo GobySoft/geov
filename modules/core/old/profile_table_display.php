@@ -38,11 +38,11 @@ $query =
     "WHERE p_show_profileid = ".$profileid;
 
 
-$result = mysql_query($query) or die(mysql_error());
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 $includestr = "";
 
-while ($row = mysql_fetch_assoc($result))
+while ($row = mysqli_fetch_assoc($result))
 {
     if ($includestr)
         $includestr .= " OR ";
@@ -108,7 +108,7 @@ $query =
 
 
 
-$result = mysql_query($query) or die(mysql_query());
+$result = mysqli_query($connection,$query) or die(mysqli_query($connection,));
 
 //id
 profile_row("", "", $result, "vehicle_id", "hidden", false);
@@ -156,8 +156,8 @@ if ($profilemode != "history")
         "FROM core_profile ".
         "WHERE profile_id = $profileid";
     
-    $result_radio = mysql_query($query) or die (mysql_error());
-    $row_radio = mysql_fetch_assoc($result_radio);
+    $result_radio = mysqli_query($connection,$query) or die (mysqli_error($connection));
+    $row_radio = mysqli_fetch_assoc($result_radio);
     profile_row("track", "", $result, "profile_vfollowid", "radio", false, $row_radio['profile_vfollowid']);
 
 }
@@ -171,8 +171,8 @@ function profile_row($title, $alltitle, $result, $key, $input, $newsort, $sarray
 {
     global $modulename;
 
-    if(mysql_num_rows($result))    
-        mysql_data_seek($result, 0);
+    if(mysqli_num_rows($result))    
+        mysqli_data_seek($result, 0);
 
     if ($input != "hidden")
     {
@@ -229,7 +229,7 @@ function profile_row($title, $alltitle, $result, $key, $input, $newsort, $sarray
 
 
     $column_count = 0;
-    while($row = mysql_fetch_assoc($result))
+    while($row = mysqli_fetch_assoc($result))
     {
         // determine the coloring
         $column_count++;

@@ -94,22 +94,25 @@ function sec2str($s)
 function mysql_get_single_value($query)
 {
     global $kml;
-    $result = mysql_query($query) or die(mysql_error());
-    $row = mysql_fetch_row($result);
+    global $connection;    
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    $row = mysqli_fetch_row($result);
     return $row[0];
 }
 
 function mysql_get_num_rows($query)
 {
     global $kml;
-    $result = mysql_query($query) or die(mysql_error());
-    return mysql_num_rows($result);
+    global $connection;
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    return mysqli_num_rows($result);
 }
 
-function kml_mysql_query($query)
+function kml_mysqli_query($connection,$query)
 {
     global $kml;
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n Errant query:\n".$query);
+    global $connection;
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n Errant query:\n".$query);
 
     return $result;
 }
@@ -141,10 +144,10 @@ function instantiate_modules($profileid, $path = "./")
             "ON module_id = p_module_moduleid ".
             "WHERE p_module_profileid = ".$profileid." ";
         
-    
-        $result = mysql_query($query) or die(mysql_error());
+        global $connection;
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-        while ($row = mysql_fetch_assoc($result))
+        while ($row = mysqli_fetch_assoc($result))
         {
             $module[$row["module_id"]] = $row["module_file"];
             $name[$row["module_id"]] = $row["p_module_moduleid"];
@@ -373,16 +376,17 @@ function finduserfromip()
         "ORDER BY ".
         "  connected_lasttime ".
         "DESC";
-    
-    $con = mysql_query($query_con) or die(mysql_error());
+
+    global $connection;    
+    $con = mysqli_query($connection,$query_con) or die(mysqli_error($connection));
   
     $userid = 0; 
     $username = "";
   
-    if(mysql_num_rows($con))
+    if(mysqli_num_rows($con))
     {
         //yes, we have a connections already
-        $row_con = mysql_fetch_assoc($con);
+        $row_con = mysqli_fetch_assoc($con);
         $userid = $row_con['connected_userid'];
         $username = stripslashes($row_con['user_name']);
 
@@ -419,8 +423,8 @@ function update_connected_vehicles($module_class, $profileid, $userid, $all_boun
         "FROM core_connected ".
         "WHERE connected_profileid = $profileid";
     
-    $result = mysql_query($query) or die(mysql_error());
-    while($row = mysql_fetch_assoc($result))
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    while($row = mysqli_fetch_assoc($result))
         $all_bound_ips[] = $row["connected_ip"];
     
     
@@ -447,7 +451,7 @@ function update_connected_vehicles($module_class, $profileid, $userid, $all_boun
                 "WHERE ".
                 "  c_vehicle_connectedid = '$last_ge_cid'";            
             
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
             
             // add the connected_vehicle entries
             
@@ -456,9 +460,9 @@ function update_connected_vehicles($module_class, $profileid, $userid, $all_boun
                 "FROM core_profile_vehicle ".
                 "WHERE p_vehicle_profileid = '$profileid'";
             
-            $result = mysql_query($query) or die(mysql_error());
+            $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
             
-            while($row = mysql_fetch_assoc($result))
+            while($row = mysqli_fetch_assoc($result))
             {
                 $vehicleid = $row["p_vehicle_vehicleid"];
                 
@@ -472,7 +476,7 @@ function update_connected_vehicles($module_class, $profileid, $userid, $all_boun
                         "VALUES ".
                         "   ('$last_ge_cid', ".
                         "    '$vehicleid') ";                    
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                 }            
             }
         }

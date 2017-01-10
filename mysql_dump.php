@@ -8,9 +8,9 @@ require_once("connections/mysql.php");
 
 $query = "show databases like 'geov_%'";
 
-$result = mysql_query($query) or die(mysql_error());
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-while($row = mysql_fetch_row($result))
+while($row = mysqli_fetch_row($result))
 {
     $db .= $row[0]." ";
 }

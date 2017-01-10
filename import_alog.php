@@ -240,8 +240,8 @@ if($vehicle_id == 0)
 $html->element("option", "(select a vehicle)", $attr);
 
 $query_vehicle = "SELECT vehicle_id, vehicle_type, vehicle_name FROM core_vehicle ORDER BY vehicle_name ASC";
-$vehicle = mysql_query($query_vehicle) or die(mysql_error());
-while($row_vehicle = mysql_fetch_assoc($vehicle))
+$vehicle = mysqli_query($connection,$query_vehicle) or die(mysqli_error($connection));
+while($row_vehicle = mysqli_fetch_assoc($vehicle))
 {
     $attr = array("value"=>$row_vehicle["vehicle_id"]);
     if($vehicle_id == $row_vehicle["vehicle_id"])
@@ -328,8 +328,8 @@ function process_file($file)
         return "error: cannot open file '$file'.";
   
     $query_done = "SELECT alog_id FROM core_imported_alogs WHERE alog_filename = '$file' LIMIT 1";
-    $done = mysql_query($query_done) or die(mysql_error());
-    if(mysql_num_rows($done))
+    $done = mysqli_query($connection,$query_done) or die(mysqli_error($connection));
+    if(mysqli_num_rows($done))
     {
         return "warning: $file has already been processed: skipping. clear core_imported_alogs entry to bypass.";
     }
@@ -419,17 +419,17 @@ function process_file($file)
           if (! in_array (strtolower ($attributes ['NAME']), explode (',', strtolower ($excluded_vehicles_var))))
             {
               $query_vehicle = ("SELECT vehicle_id FROM core_vehicle WHERE (vehicle_name = '" . $attributes ['NAME'] . "') and (vehicle_type = '" . $attributes ['TYPE'] . "')");
-              $queried_vehicle = mysql_query($query_vehicle) or die(mysql_error());
-              if ($row_vehicle = mysql_fetch_assoc($queried_vehicle))
+              $queried_vehicle = mysqli_query($connection,$query_vehicle) or die(mysqli_error($connection));
+              if ($row_vehicle = mysqli_fetch_assoc($queried_vehicle))
                 {
                   $vehicle_id = $row_vehicle[vehicle_id];
                 }
               else
                 {
                   $query_insert_vehicle = ("INSERT INTO core_vehicle (vehicle_name, vehicle_type) VALUES ('" . $attributes ['NAME'] . "', '" . strtolower ($attributes ['TYPE']) . "')");
-                  mysql_query($query_insert_vehicle) or die(mysql_error());
-                  $queried_vehicle = mysql_query($query_vehicle) or die(mysql_error());
-                  if ($row_vehicle = mysql_fetch_assoc($queried_vehicle))
+                  mysqli_query($connection,$query_insert_vehicle) or die(mysqli_error($connection));
+                  $queried_vehicle = mysqli_query($connection,$query_vehicle) or die(mysqli_error($connection));
+                  if ($row_vehicle = mysqli_fetch_assoc($queried_vehicle))
                     {
                       $vehicle_id = $row_vehicle[vehicle_id];
                     }
@@ -450,7 +450,7 @@ function process_file($file)
 
     //record that we have processed this file so we don't do it again.
     $query_add = "INSERT INTO core_imported_alogs(alog_vehicleid, alog_filename) VALUES ('$vehicle_id', '$file')";
-    mysql_query($query_add) or die(mysql_error());
+    mysqli_query($connection,$query_add) or die(mysqli_error($connection));
   
 
     $output .= "added $db_count new rows";
@@ -465,12 +465,12 @@ function publish_to_db($gps_lat,$gps_long,$time,$heading, $speed, $depth)
     global $vehicle_id;
 
     $query = "SELECT * FROM core_data WHERE data_vehicleid=$vehicle_id AND ".($time+1).">data_time AND ".($time-1)."<data_time LIMIT 1";
-    if (mysql_num_rows(mysql_query($query)))
+    if (mysqli_num_rows(mysqli_query($connection,$query)))
         return 1;
 
     $query = "INSERT INTO core_data(data_time, data_vehicleid, data_lat, data_long, data_heading, data_speed, data_depth, data_quality) VALUES ('$time', '$vehicle_id', '$gps_lat', '$gps_long','$heading', '$speed', '$depth', '0')";
   
-    mysql_query($query) or die(mysql_error());
+    mysqli_query($connection,$query) or die(mysqli_error($connection));
 
     return 0;
 
