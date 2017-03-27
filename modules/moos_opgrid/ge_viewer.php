@@ -742,7 +742,7 @@ function plot_viewpolygon($datum)
             {
                 $xypair = explode(",", $pairs[$i]);
 
-                if($xypair[0]==nan || $xypair[1]==nan)
+                if(is_nan($xypair[0]) || is_nan($xypair[1]))
                     continue;
                 
                 $geodesy->setUTM((int)$xypair[0]+(int)$datum["x"], (int)$xypair[1] + (int)$datum["y"], $datum["zone"]);
