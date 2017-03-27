@@ -96,8 +96,15 @@ function mysql_get_single_value($query)
     global $kml;
     global $connection;    
     $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
-    $row = mysqli_fetch_row($result);
-    return $row[0];
+    if(mysqli_num_rows($result) == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        $row = mysqli_fetch_row($result);
+        return $row[0];
+    }
 }
 
 function mysql_get_num_rows($query)

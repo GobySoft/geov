@@ -255,7 +255,8 @@ function realtime($stime, $ltime, $reload)
     $last_did = mysql_get_single_value("SELECT connected_lastdataid ".
                                        "FROM core_connected ".
                                        "WHERE connected_id = '$cid'");
-  
+                                       
+
     $new_maxdid = $last_did;
 
     

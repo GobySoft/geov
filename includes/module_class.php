@@ -120,7 +120,7 @@ class Module
             
             mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
-            $profileid = mysql_insert_id();
+            $profileid = mysqli_insert_id($connection);
         }
 
         $this->set_reload($profileid);
@@ -245,7 +245,7 @@ class Module
         //        echo($query_insert."<br>");        
         mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
-        $new_profileid = mysql_insert_id();
+        $new_profileid = mysqli_insert_id($connection);
     
 
         // profile -> p
@@ -526,7 +526,7 @@ class Module
                 
                 $new_input[$value["mysql_key"]] = (($_POST[$this->name."_".$value["mysql_key"]."all"]==1 ||
                                                     isset($_POST[$this->name."_".$value["mysql_key"]][$vehicleid])) && 
-                                                   $_POST[$this->name."_".$value["mysql_key"]."all"] !=2) ? true : false;
+                                                   $_POST[$this->name."_".$value["mysql_key"]."all"] !=2) ? 1 : 0;
                 
             }
 
@@ -569,7 +569,7 @@ class Module
             "p_vehicle_vehicleid='$vehicleid'";
         
         if ($new_input)
-            mysqli_query($connection,$query) or die(mysqli_error($connection));
+            mysqli_query($connection,$query) or die($query." ".mysqli_error($connection));
     }
 
 
@@ -1129,10 +1129,16 @@ class Module
         global $connection;        
         
         // add/update the bindings
-        $query =
-            "REPLACE ".
+        $query = "INSERT ";
+
+        if($last_ge_cid != NULL)
+            $query = "REPLACE ";
+        
+        $query .=
             $this->db.".".$this->name."_connected ".
-            "(connected_id, ";
+            "(";
+        if($last_ge_cid != NULL)
+            $query .= "connected_id, ";
 
         if($this->name == "core")
         {
@@ -1145,8 +1151,10 @@ class Module
         }
         $query .= 
             "connected_reload) ".
-            "VALUES ".
-            "('$last_ge_cid', ";
+            "VALUES (";
+            
+        if($last_ge_cid != NULL)
+          $query .= "'$last_ge_cid', ";
 
         if($this->name == "core")
         {
@@ -1161,10 +1169,10 @@ class Module
             "'1') ";
 
 
-        mysqli_query($connection,$query) or die(mysqli_error($connection));
+        mysqli_query($connection,$query) or die($query." ".mysqli_error($connection));
 
         
-        return mysql_insert_id();
+        return mysqli_insert_id($connection);
         
     }
 

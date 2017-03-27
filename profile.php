@@ -169,7 +169,7 @@ switch($do)
                 mysqli_query($connection,"INSERT INTO core_user (user_name) ".
                             "VALUES ('".$user_name."')")
                     or die(mysqli_error($connection));
-                $userid = mysql_insert_id();
+                $userid = mysqli_insert_id($connection);
             }
             else 
             {
@@ -1080,7 +1080,7 @@ function profile_save($profileid)
     $ip = "";
     if(isset($_POST[iplocal]))
     {
-        $ip = $_SERVER[REMOTE_ADDR];
+        $ip = $_SERVER['REMOTE_ADDR'];
     }
     else
     {
@@ -1122,7 +1122,7 @@ function header_with_message($location = "")
         "WHERE connected_id = '$cid'";
     
     mysqli_query($connection,$query)
-        or die(mysqli_error($connection));
+        or die($query." ".mysqli_error($connection));
     
     $location = ($location) ? "#".$location : "";
     
