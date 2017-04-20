@@ -19,7 +19,7 @@ while($row = mysqli_fetch_row($result))
 if($type == "minimal")              
     $command = "mysqldump --databases ".$db." --no-data -u sea --password=saline12; ".
         "echo 'USE `geov_core`;';".
-        "mysqldump  -u sea --password=saline12 --database geov_core --tables ".
+        "mysqldump  -u sea --password=saline12 --databases geov_core --tables ".
         "core_module ".
         "core_page ".
         "core_vehicle ".
