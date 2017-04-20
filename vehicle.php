@@ -390,7 +390,7 @@ function save()
         if($j)
             $query .= ",";
         
-        $query .= $key."='".mysql_real_escape_string($value)."' ";
+        $query .= $key."='".mysqli_real_escape_string($connection, $value)."' ";
         $j++;
         
     }

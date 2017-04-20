@@ -70,7 +70,7 @@ class Module
     function create($profileid, $profilename="", $profilemode="", $userid=0)
     {   
         global $connection;
-        $profilename = mysql_real_escape_string($profilename);
+        $profilename = mysqli_real_escape_string($connection, $profilename);
 
 
         foreach ($this->base as $base_name => $base_value)
