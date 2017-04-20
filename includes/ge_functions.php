@@ -391,7 +391,9 @@ function finduserfromip()
   
     $userid = 0; 
     $username = "";
-  
+    $cid = 0;
+    $message = "";
+
     if(mysqli_num_rows($con))
     {
         //yes, we have a connections already

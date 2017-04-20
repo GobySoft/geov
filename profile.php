@@ -156,7 +156,7 @@ switch($do)
         // see if someone already has this user name
         if (!$userid)
         {
-            $user_name = mysql_real_escape_string($_POST['user_name']);
+            $user_name = mysqli_real_escape_string($connection, $_POST['user_name']);
             $query_find =
                 "SELECT user_id ".
                 "FROM core_user ".
@@ -166,8 +166,8 @@ switch($do)
             if (!mysql_get_num_rows($query_find))
             {
                 // no, create it
-                mysqli_query($connection,"INSERT INTO core_user (user_name) ".
-                            "VALUES ('".$user_name."')")
+                mysqli_query($connection,"INSERT INTO core_user (user_name, user_active_profileid) ".
+                            "VALUES ('".$user_name."', 0)")
                     or die(mysqli_error($connection));
                 $userid = mysqli_insert_id($connection);
             }

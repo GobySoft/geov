@@ -10,6 +10,8 @@ $query = "show databases like 'geov_%'";
 
 $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
+$db =  "";
+
 while($row = mysqli_fetch_row($result))
 {
     $db .= $row[0]." ";
