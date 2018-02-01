@@ -94,22 +94,32 @@ function sec2str($s)
 function mysql_get_single_value($query)
 {
     global $kml;
-    $result = mysql_query($query) or die(mysql_error());
-    $row = mysql_fetch_row($result);
-    return $row[0];
+    global $connection;    
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    if(mysqli_num_rows($result) == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        $row = mysqli_fetch_row($result);
+        return $row[0];
+    }
 }
 
 function mysql_get_num_rows($query)
 {
     global $kml;
-    $result = mysql_query($query) or die(mysql_error());
-    return mysql_num_rows($result);
+    global $connection;
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    return mysqli_num_rows($result);
 }
 
-function kml_mysql_query($query)
+function kml_mysqli_query($connection,$query)
 {
     global $kml;
-    $result = mysql_query($query) or $kml->kerr(mysql_error()."\n Errant query:\n".$query);
+    global $connection;
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n Errant query:\n".$query);
 
     return $result;
 }
@@ -130,6 +140,8 @@ function token_parse($haystack, $needle, $pair_delimiter = ",", $key_delimiter =
 function instantiate_modules($profileid, $path = "./")
 {
     global $html;
+    global $connection;    
+
     $module = array("-1" => "modules/core/module.php");
 
     if($profileid)
@@ -141,10 +153,10 @@ function instantiate_modules($profileid, $path = "./")
             "ON module_id = p_module_moduleid ".
             "WHERE p_module_profileid = ".$profileid." ";
         
-    
-        $result = mysql_query($query) or die(mysql_error());
+        global $connection;
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-        while ($row = mysql_fetch_assoc($result))
+        while ($row = mysqli_fetch_assoc($result))
         {
             $module[$row["module_id"]] = $row["module_file"];
             $name[$row["module_id"]] = $row["p_module_moduleid"];
@@ -352,7 +364,8 @@ function hexcolor2googlecolor(&$color, $key)
 
 function finduserfromip()
 {
-  
+    global $connection;    
+
     // check to see if we have information on this ip connection  
     $cip = $_SERVER['REMOTE_ADDR'];
     $query_con =
@@ -373,16 +386,18 @@ function finduserfromip()
         "ORDER BY ".
         "  connected_lasttime ".
         "DESC";
-    
-    $con = mysql_query($query_con) or die(mysql_error());
+
+    $con = mysqli_query($connection,$query_con) or die(mysqli_error($connection));
   
     $userid = 0; 
     $username = "";
-  
-    if(mysql_num_rows($con))
+    $cid = 0;
+    $message = "";
+
+    if(mysqli_num_rows($con))
     {
         //yes, we have a connections already
-        $row_con = mysql_fetch_assoc($con);
+        $row_con = mysqli_fetch_assoc($con);
         $userid = $row_con['connected_userid'];
         $username = stripslashes($row_con['user_name']);
 
@@ -391,7 +406,7 @@ function finduserfromip()
         
     }
   
-    return array($cid, $username, $userid, $message);
+   return array($cid, $username, $userid, $message);
   
 }
 
@@ -413,14 +428,15 @@ function geov_timestr($time)
     
 function update_connected_vehicles($module_class, $profileid, $userid, $all_bound_ips = array())
 {
+    global $connection;    
     // get all the previously bound ip addresses for this profile
     $query =
         "SELECT connected_ip ".
         "FROM core_connected ".
         "WHERE connected_profileid = $profileid";
     
-    $result = mysql_query($query) or die(mysql_error());
-    while($row = mysql_fetch_assoc($result))
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+    while($row = mysqli_fetch_assoc($result))
         $all_bound_ips[] = $row["connected_ip"];
     
     
@@ -447,7 +463,7 @@ function update_connected_vehicles($module_class, $profileid, $userid, $all_boun
                 "WHERE ".
                 "  c_vehicle_connectedid = '$last_ge_cid'";            
             
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
             
             // add the connected_vehicle entries
             
@@ -456,9 +472,9 @@ function update_connected_vehicles($module_class, $profileid, $userid, $all_boun
                 "FROM core_profile_vehicle ".
                 "WHERE p_vehicle_profileid = '$profileid'";
             
-            $result = mysql_query($query) or die(mysql_error());
+            $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
             
-            while($row = mysql_fetch_assoc($result))
+            while($row = mysqli_fetch_assoc($result))
             {
                 $vehicleid = $row["p_vehicle_vehicleid"];
                 
@@ -472,7 +488,7 @@ function update_connected_vehicles($module_class, $profileid, $userid, $all_boun
                         "VALUES ".
                         "   ('$last_ge_cid', ".
                         "    '$vehicleid') ";                    
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                 }            
             }
         }

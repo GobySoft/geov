@@ -77,15 +77,15 @@ $query =
     "AND ".
     "  connected_ip='$ip'";
 
-$result = mysql_query($query) or die(mysql_error());
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 $cid = 0;
 $profileid = 0;
 
 // we are already connected
-if(mysql_num_rows($result))
+if(mysqli_num_rows($result))
 {
-  $row = mysql_fetch_assoc($result);
+  $row = mysqli_fetch_assoc($result);
   $cid = $row["connected_id"];
   $profileid = $row["connected_profileid"];
 }
@@ -112,8 +112,8 @@ else
 
 
 $query = "SELECT connected_playback FROM core_connected WHERE connected_id = $cid";
-$result = mysql_query($query) or die(mysql_error());
-$row = mysql_fetch_assoc($result);
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+$row = mysqli_fetch_assoc($result);
 
 $status = $row['connected_playback'];
 
@@ -123,19 +123,19 @@ switch($do)
 {
  case "play":
    $query = "UPDATE core_connected SET connected_playback=1 WHERE connected_id = $cid";
-   mysql_query($query) or die(mysql_error());
+   mysqli_query($connection,$query) or die(mysqli_error($connection));
    $status = 1;
    break;
 
  case "pause":
    $query = "UPDATE core_connected SET connected_playback=2 WHERE connected_id = $cid";
-   mysql_query($query) or die(mysql_error());
+   mysqli_query($connection,$query) or die(mysqli_error($connection));
    $status = 2;
    break;
 
  case "stop":
    $query = "UPDATE core_connected SET connected_playback=0, connected_playbackcount=0 WHERE connected_id = $cid";
-   mysql_query($query) or die(mysql_error());
+   mysqli_query($connection,$query) or die(mysqli_error($connection));
    $status = 0;
    break;
 
@@ -146,14 +146,14 @@ switch($do)
      }
    $query = "UPDATE core_connected SET connected_playback=3, connected_playbackstep=$step_amount WHERE connected_id = $cid";
    $status = 2;
-   mysql_query($query) or die(mysql_error());   
+   mysqli_query($connection,$query) or die(mysqli_error($connection));   
    $message = "stepped by ".$step_amount."x.\n";
    break;
 
    //change rate
  case "rate_ch":
    $query = "UPDATE core_profile SET profile_rate='".(string)(double)$_POST['rate']."' WHERE profile_id = $profileid";
-   mysql_query($query) or die(mysql_error());
+   mysqli_query($connection,$query) or die(mysqli_error($connection));
    $message = "rate changed.\n";
    break;
 
@@ -163,8 +163,8 @@ switch($do)
 
 
 $query = "SELECT profile_name, profile_mode, profile_rate FROM core_profile WHERE profile_id = $profileid";
-$result = mysql_query($query) or die(mysql_error());
-$row = mysql_fetch_assoc($result);
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+$row = mysqli_fetch_assoc($result);
 $rate = $row['profile_rate'];
 
 $html->push("div");

@@ -20,9 +20,9 @@ function profile_copy($modulename, $new_userid, $base_table, $sub_table)
         "WHERE profile_id = ".$profileid;
 
     
-    $result = mysql_query($query) or die(mysql_error());
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-    $row = mysql_fetch_array($result, MYSQL_ASSOC);
+    $row = mysqli_fetch_array($result, MYSQL_ASSOC);
 
     $query_insert = "INSERT INTO ".$modulename.$base_table."(";
 
@@ -68,7 +68,7 @@ function profile_copy($modulename, $new_userid, $base_table, $sub_table)
     }
     $query_insert .= "')";
 
-    mysql_query($query_insert) or die(mysql_error());
+    mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
     $new_profileid = mysql_insert_id();
     
@@ -84,9 +84,9 @@ function profile_copy($modulename, $new_userid, $base_table, $sub_table)
             "SELECT * ".
             "FROM ".$modulename.$base_table."_".$sub_tablename." ".
             "WHERE ".$base_table_abbrev."_".$sub_tablename."_profileid = ".$profileid;
-        $result = mysql_query($query);
+        $result = mysqli_query($connection,$query);
         
-        while($row = mysql_fetch_array($result, MYSQL_ASSOC))
+        while($row = mysqli_fetch_array($result, MYSQL_ASSOC))
         {
             
             $query_insert =
@@ -130,7 +130,7 @@ function profile_copy($modulename, $new_userid, $base_table, $sub_table)
             }
             $query_insert .= "')";
 
-            mysql_query($query_insert) or die(mysql_error());
+            mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
         }
 

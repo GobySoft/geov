@@ -22,9 +22,9 @@ $query =
     "WHERE". 
     "  profile_id = '$profileid'";
 
-$result = mysql_query($query) or die(mysql_error());
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-$row = mysql_fetch_assoc($result);
+$row = mysqli_fetch_assoc($result);
 
 $p_rate = $row['profile_rate'];
 $p_settime = $row['profile_settime'];

@@ -69,8 +69,10 @@ class Module
     
     function create($profileid, $profilename="", $profilemode="", $userid=0)
     {   
-        $profilename = mysql_real_escape_string($profilename);
-        
+        global $connection;
+        $profilename = mysqli_real_escape_string($connection, $profilename);
+
+
         foreach ($this->base as $base_name => $base_value)
         {
             
@@ -116,9 +118,9 @@ class Module
             $query_insert .= ")";
             
             
-            mysql_query($query_insert) or die(mysql_error());
+            mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
-            $profileid = mysql_insert_id();
+            $profileid = mysqli_insert_id($connection);
         }
 
         $this->set_reload($profileid);
@@ -126,6 +128,7 @@ class Module
 
     function unbind($cidarray)
     {
+        global $connection;
         if($cidarray)
         {
             
@@ -136,7 +139,7 @@ class Module
                     "DELETE FROM ".$this->db.".".$this->name."_connected ".
                     "WHERE connected_id=$cid";
                 
-                mysql_query($query) or die(mysql_error());
+                mysqli_query($connection,$query) or die(mysqli_error($connection));
                 
                 if($this->name == "core")
                 {
@@ -144,7 +147,7 @@ class Module
                     $query =
                         "DELETE FROM core_connected_vehicle ".
                         "WHERE c_vehicle_connectedid=$cid";
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                 }
             }
         }
@@ -152,21 +155,22 @@ class Module
     
     
     function delete($profileid, $cidarray)
-    {
-        
+    { 
+        global $connection;
+       
         $this->unbind($cidarray);
 
         $query =
             "DELETE FROM ".$this->db.".".$this->name."_profile ".
             "WHERE profile_id=$profileid";
-        mysql_query($query) or die(mysql_error());
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
         
         foreach($this->sub as $key=>$value)
         {            
             $query =
                 "DELETE FROM ".$this->db.".".$this->name."_profile_".$key." ".
                 "WHERE p_".$key."_profileid=$profileid";
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
         }
         
     }
@@ -175,7 +179,7 @@ class Module
     
     function copy($profileid, $new_profileid, $new_userid)
     {
-        
+        global $connection;        
         
         // base_table
         $query =
@@ -184,9 +188,9 @@ class Module
             "WHERE profile_id = ".$profileid;
 
     
-        $result = mysql_query($query) or die(mysql_error());
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-        $row = mysql_fetch_array($result, MYSQL_ASSOC);
+        $row = mysqli_fetch_array($result, MYSQL_ASSOC);
 
         $query_insert = "REPLACE ".$this->db.".".$this->name."_profile(";
 
@@ -239,9 +243,9 @@ class Module
 
 
         //        echo($query_insert."<br>");        
-        mysql_query($query_insert) or die(mysql_error());
+        mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
-        $new_profileid = mysql_insert_id();
+        $new_profileid = mysqli_insert_id($connection);
     
 
         // profile -> p
@@ -251,14 +255,15 @@ class Module
         foreach($this->sub as $sub_name => $sub_array)
         {
         
-    
+            global $connection;        
+
             $query =
                 "SELECT * ".
                 "FROM ".$this->db.".".$this->name."_profile_".$sub_name." ".
                 "WHERE ".$base_abbrev."_".$sub_name."_profileid = ".$profileid;
-            $result = mysql_query($query);
+            $result = mysqli_query($connection,$query);
         
-            while($row = mysql_fetch_array($result, MYSQL_ASSOC))
+            while($row = mysqli_fetch_array($result, MYSQL_ASSOC))
             {
             
                 $query_insert =
@@ -303,7 +308,7 @@ class Module
                 $query_insert .= "')";
 
                 //                echo($query_insert."<br>");            
-                mysql_query($query_insert) or die(mysql_error());
+                mysqli_query($connection,$query_insert) or die(mysqli_error($connection));
 
             }
 
@@ -315,6 +320,7 @@ class Module
     function veh_parameter_disp($profileid, $profilemode)
     {
         global $html;
+        global $connection;        
         
         if (!$this->vtable)
             return;
@@ -384,10 +390,11 @@ class Module
             "ORDER BY ".
             $sortstr;
 
-        
-        $result = mysql_query($query) or die(mysql_error());
 
-        if(mysql_num_rows($result) == 0)
+        global $connection;        
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
+
+        if(mysqli_num_rows($result) == 0)
         {
             if($this->name == "core")
                 $html->p("(no vehicles selected for display)", array("class"=>"red"));
@@ -396,7 +403,7 @@ class Module
         }
         
         
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             $this->add_vehicle_row($profileid, $row['vehicle_id']);   
         }
@@ -428,8 +435,8 @@ class Module
 
         if ($i)
         {
-            $result_radio = mysql_query($query_radio) or die (mysql_error());
-            $row_radio = mysql_fetch_assoc($result_radio);
+            $result_radio = mysqli_query($connection,$query_radio) or die (mysqli_error($connection));
+            $row_radio = mysqli_fetch_assoc($result_radio);
         }
 
 
@@ -495,6 +502,7 @@ class Module
     function veh_parameter_save($profileid, $profilemode, $vehicleid)
     {
         $new_input = array();
+        global $connection;        
         
         foreach($this->vtable as $value)
         {
@@ -518,7 +526,7 @@ class Module
                 
                 $new_input[$value["mysql_key"]] = (($_POST[$this->name."_".$value["mysql_key"]."all"]==1 ||
                                                     isset($_POST[$this->name."_".$value["mysql_key"]][$vehicleid])) && 
-                                                   $_POST[$this->name."_".$value["mysql_key"]."all"] !=2) ? true : false;
+                                                   $_POST[$this->name."_".$value["mysql_key"]."all"] !=2) ? 1 : 0;
                 
             }
 
@@ -561,14 +569,15 @@ class Module
             "p_vehicle_vehicleid='$vehicleid'";
         
         if ($new_input)
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die($query." ".mysqli_error($connection));
     }
 
 
     function gen_parameter_disp($profileid, $profilemode)
     {
         global $html;
-        
+        global $connection;        
+
         if (!$this->gtable)
             return;
 
@@ -608,10 +617,11 @@ class Module
             "  profile_id = '$profileid'";
         
         
-        $result = mysql_query($query) or die(mysql_error());
+        global $connection;        
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
         
-        $row = mysql_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
 
         
         $html->push("table");
@@ -682,6 +692,7 @@ class Module
 
     function gen_parameter_save($profileid, $profilemode)
     {
+        global $connection;
         $save_value = array();
 
         if($this->gtable)
@@ -770,7 +781,7 @@ class Module
             "profile_id = '".$profileid."'";
 
         
-        mysql_query($query) or die(mysql_error());
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 
     }
@@ -778,6 +789,7 @@ class Module
 
     function add_vehicle_row($profileid, $vehicleid, $new = false)
     {
+        global $connection;        
         if(!$this->vtable)
             return;
 
@@ -809,7 +821,8 @@ class Module
             $query .=
                 "ON DUPLICATE KEY UPDATE p_vehicle_id = p_vehicle_id ";
 
-        mysql_query($query) or die(mysql_error());
+        global $connection;        
+        mysqli_query($connection,$query) or die(mysqli_error($connection));
         
         
     }
@@ -825,12 +838,13 @@ class Module
 //          "select" - display select option
     function profile_row($title, $alltitle, $result, $key, $input, $newsort, $sarray = array(), $style_array = array())
     {
+        global $connection;        
         global $html;
         
         $modulename = $this->name."_";
         
-        if(mysql_num_rows($result))    
-            mysql_data_seek($result, 0);
+        if(mysqli_num_rows($result))    
+            mysqli_data_seek($result, 0);
 
         if ($input != "hidden")
         {
@@ -920,7 +934,7 @@ class Module
 
 
         $column_count = 0;
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             // determine the coloring
             $column_count++;
@@ -1112,12 +1126,19 @@ class Module
 
     function gen_bind($profileid, $last_ge_cid, $ip, $userid)
     {
+        global $connection;        
         
         // add/update the bindings
-        $query =
-            "REPLACE ".
+        $query = "INSERT ";
+
+        if($last_ge_cid != NULL)
+            $query = "REPLACE ";
+        
+        $query .=
             $this->db.".".$this->name."_connected ".
-            "(connected_id, ";
+            "(";
+        if($last_ge_cid != NULL)
+            $query .= "connected_id, ";
 
         if($this->name == "core")
         {
@@ -1130,8 +1151,10 @@ class Module
         }
         $query .= 
             "connected_reload) ".
-            "VALUES ".
-            "('$last_ge_cid', ";
+            "VALUES (";
+            
+        if($last_ge_cid != NULL)
+          $query .= "'$last_ge_cid', ";
 
         if($this->name == "core")
         {
@@ -1146,10 +1169,10 @@ class Module
             "'1') ";
 
 
-        mysql_query($query) or die(mysql_error());
+        mysqli_query($connection,$query) or die($query." ".mysqli_error($connection));
 
         
-        return mysql_insert_id();
+        return mysqli_insert_id($connection);
         
     }
 
@@ -1163,11 +1186,11 @@ class Module
     
     function set_reload($profileid)
     {
-
+        global $connection;
         if($this->name == "core")
         {
             $query = "UPDATE geov_core.core_connected SET connected_reload = 1 WHERE connected_profileid=$profileid";
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
         }
         else
         {
@@ -1175,9 +1198,9 @@ class Module
                 "   FROM geov_core.core_connected ".
                 "   WHERE geov_core.core_connected.connected_profileid=$profileid";
 
-            $result = mysql_query($query) or die(mysql_error());
+            $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
             
-            while($row = mysql_fetch_assoc($result))
+            while($row = mysqli_fetch_assoc($result))
             {
                 $cid = $row["connected_id"];
                 
@@ -1192,7 +1215,7 @@ class Module
                         "VALUES ( ".
                         "  '$cid', ".
                         "   '1')";
-                    mysql_query($query) or die(mysql_error());
+                    mysqli_query($connection,$query) or die(mysqli_error($connection));
                 }
             }
         }
@@ -1202,6 +1225,7 @@ class Module
 
     function find_closest_color_from_id($vehicleid)
     {
+        global $connection;        
         $name = mysql_get_single_value("SELECT vehicle_name FROM geov_core.core_vehicle WHERE vehicle_id = '$vehicleid'");
         
         $colorarray = array_values(colorarray());

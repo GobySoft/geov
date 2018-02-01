@@ -77,7 +77,7 @@ switch($do)
 
             $query = "UPDATE core_vehicle SET vehicle_image='$uploadfile' ";
             $query .= "WHERE vehicle_id = $vehicleid";            
-            mysql_query($query) or die(mysql_error());
+            mysqli_query($connection,$query) or die(mysqli_error($connection));
             
         }
         
@@ -99,11 +99,11 @@ switch($do)
             "  vehicle_name ".
             "ASC ";
 
-        $result = mysql_query($query) or die(mysql_error());
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
         $j = 0;
         $first = 0;
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             $id = $row["vehicle_id"];
             
@@ -111,7 +111,7 @@ switch($do)
                 $first = $id;
 
             if($id == $vehicleid)
-                $vehicleid = ($row = mysql_fetch_assoc($result)) ? $row["vehicle_id"] : $first;
+                $vehicleid = ($row = mysqli_fetch_assoc($result)) ? $row["vehicle_id"] : $first;
             $j++;
         }
         
@@ -132,11 +132,11 @@ switch($do)
             "  vehicle_name ".
             "DESC ";
 
-        $result = mysql_query($query) or die(mysql_error());
+        $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
         $j = 0;
         $last = 0;
-        while($row = mysql_fetch_assoc($result))
+        while($row = mysqli_fetch_assoc($result))
         {
             $id = $row["vehicle_id"];
             
@@ -144,7 +144,7 @@ switch($do)
                 $last = $id;
             
             if($id == $vehicleid)
-                $vehicleid = ($row = mysql_fetch_assoc($result)) ? $row["vehicle_id"] : $last;
+                $vehicleid = ($row = mysqli_fetch_assoc($result)) ? $row["vehicle_id"] : $last;
             $j++;
         }
         
@@ -197,11 +197,11 @@ if(!$vehicleid)
         "  vehicle_disabled, vehicle_name ".
         "ASC ";
 
-    $result = mysql_query($query) or die(mysql_error());
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
     $value[0] = "0";
     $text[0] = "(choose a vehicle)";
-    while($row = mysql_fetch_assoc($result))
+    while($row = mysqli_fetch_assoc($result))
     {
         $value[] = $row["vehicle_id"];
         $newtext = $row["vehicle_name"]." (".$row["vehicle_type"].")";
@@ -255,9 +255,9 @@ else
         "WHERE ".
         "  vehicle_id = $vehicleid";
     
-    $result = mysql_query($query) or die(mysql_error());
+    $result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-    $row = mysql_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
 
     $vname = $row["vehicle_name"];
     $vtype = $row["vehicle_type"];
@@ -371,8 +371,8 @@ function header_with_message($location = "")
         "SET connected_message = '".addslashes($message)."' ".
         "WHERE connected_id = '$cid'";
     
-    mysql_query($query)
-        or die(mysql_error());
+    mysqli_query($connection,$query)
+        or die(mysqli_error($connection));
     
     $location = ($location) ? "#".$location : "";
     
@@ -390,14 +390,14 @@ function save()
         if($j)
             $query .= ",";
         
-        $query .= $key."='".mysql_real_escape_string($value)."' ";
+        $query .= $key."='".mysqli_real_escape_string($connection, $value)."' ";
         $j++;
         
     }
     $query .= "WHERE vehicle_id = $vehicleid";
     
     
-    mysql_query($query) or die(mysql_error());
+    mysqli_query($connection,$query) or die(mysqli_error($connection));
     
     $message .= "\nvehicle configuration ($vehicleid) saved: ".gmdate("r").".\n";
 }

@@ -63,6 +63,6 @@ $query =
     "WHERE ".
     "profile_id = '".$profileid."'";
 
-mysql_query($query) or die(mysql_error());
+mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 ?>

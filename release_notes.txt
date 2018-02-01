@@ -1,5 +1,10 @@
 release notes for geov:
 
+v1.0: 2.1.18:
+
+- Updated for PHP7.0
+
+
 pre v1.0
 features:
 - added simulation mode

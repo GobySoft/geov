@@ -8,9 +8,11 @@ require_once("connections/mysql.php");
 
 $query = "show databases like 'geov_%'";
 
-$result = mysql_query($query) or die(mysql_error());
+$result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-while($row = mysql_fetch_row($result))
+$db =  "";
+
+while($row = mysqli_fetch_row($result))
 {
     $db .= $row[0]." ";
 }
@@ -19,7 +21,7 @@ while($row = mysql_fetch_row($result))
 if($type == "minimal")              
     $command = "mysqldump --databases ".$db." --no-data -u sea --password=saline12; ".
         "echo 'USE `geov_core`;';".
-        "mysqldump  -u sea --password=saline12 --database geov_core --tables ".
+        "mysqldump  -u sea --password=saline12 --databases geov_core --tables ".
         "core_module ".
         "core_page ".
         "core_vehicle ".
