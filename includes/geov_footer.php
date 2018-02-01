@@ -1,7 +1,7 @@
 <?php
 
 $html->push("div");
-$html->small("t. schneider | tes at mit.edu | laboratory for autonomous marine sensing systems");
+$html->small("t. schneider | toby@gobysoft.org | GobySoft, LLC");
 $html->pop();
 
 $html->hr();
@@ -11,7 +11,7 @@ $html->small("client ip: $_SERVER[REMOTE_ADDR]:$_SERVER[REMOTE_PORT] | server ip
 $html->pop();
 
 $html->push("div");
-$html->small("geov version: 0.9 | released 2.9.09");
+$html->small("geov version: 1.0 | released 2018-02-01");
 $html->pop();
 
 ?>
