@@ -66,7 +66,7 @@ $kml->element("href", "http://".$_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_POR
 $kml->element("refreshMode", "onInterval");
 $kml->element("refreshInterval", "1");
 $kml->pop();
-$kml->element("flyToView", "1");
+$kml->element("flyToView", "0");
 $kml->pop();
 
 $kml->push("NetworkLink");
