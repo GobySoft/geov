@@ -77,6 +77,44 @@ class opgrid_kml_writer extends kml_writer
         //$this->kml_opbox_label($name, $lat[0], $lon[0], "ffffffff", "viewplot_label_".$name);
         
     }
+
+    function kml_viewcircle($lat, $lon, $name, $radius)
+    {
+    
+        $r = 0;
+        $g = 127;
+        $b = 255;
+
+        $alpha = 1;
+
+        $this->push("Placemark");
+        $this->element("name", $name);
+        $this->push("LineString");
+        $this->element("tessellate", "1");
+        $this->push("coordinates");
+
+        $n=100;
+        $delta = 360.0/$n;
+        for ($i=1; $i <= $n+1; ++$i)
+        {
+           $rotation = ($i-1)*$delta;    
+            list($dlat, $dlon) = simple_xy2latlong(0, 0, cos(deg2rad($rotation))*$radius, sin(deg2rad($rotation))*$radius, $lat);
+            $this->insert(($lon+$dlon).",".($lat+$dlat).",0");
+        }
+        $this->pop(); // coordinates
+        $this->pop(); // Linestring
+            
+        $this->push("Style");
+        $this->push("LineStyle");
+        $this->element("width", "1");
+        $this->element("color", sprintf("%02X%02X%02X%02X", $alpha*255, $b, $g, $r));
+        $this->pop();
+        $this->pop();
+            
+        $this->pop(); //Placemark
+    }
+
+
     
 }
 

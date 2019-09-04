@@ -275,6 +275,7 @@ function opgrid()
         $is_new_viewobject = read_viewobjects();
         plot_viewpolygon($datum);
         plot_viewpoint($datum);
+        plot_viewcircle($datum);
         
         if($is_new_viewobject)
         {
@@ -515,6 +516,7 @@ function read_viewobjects()
     global $sim_id;
     global $pid;
     global $connection;
+    global $kml;
     
     $query =
         "SELECT data_value ".
@@ -660,6 +662,79 @@ function read_viewobjects()
         }
     }
 
+
+    $query =
+        "SELECT data_value ".
+        "FROM geov_moos_opgrid.moos_opgrid_data ".
+        "WHERE data_variable='VIEW_CIRCLE' ".
+        "AND data_userid = $sim_id ".
+        "AND data_time >= UNIX_TIMESTAMP()-".POLY_EXPIRE." ".
+        "ORDER BY data_id DESC LIMIT 10";
+    
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+
+    $new_viewcircles = array();
+    while($row = mysqli_fetch_row($result))
+    {
+        //  x=344.91,y=-380.53,radius=606.43,duration=0,label=h1
+        $new_viewcircle = $row[0];
+
+        // 0 -> x=344.91
+        // 1 -> y=-380.53
+        // 2 -> radius=606.43
+        // ...       
+        $pairs = explode(",", $new_viewcircle);
+
+        foreach($pairs as $key=>$pair)
+        {
+             $p = explode("=", $pair);
+             $circle_params[$p[0]] = $p[1];
+        }
+
+        if(array_key_exists("label", $circle_params))
+        {
+                $label = $circle_params["label"];
+                $v_name = substr($label, 0, strrpos($label, "_"));
+	
+                $vid = mysql_get_single_value("SELECT vehicle_id FROM geov_core.core_vehicle WHERE vehicle_name LIKE '".$v_name."'");
+
+                if(!array_key_exists($vid, $new_viewcircles))
+                    $new_viewcircles[$vid] = $new_viewcircle;
+       }
+    }
+
+    $query =
+        "SELECT p_vehicle_vehicleid FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+        "WHERE p_vehicle_profileid = '$pid'";
+
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+
+    while($row = mysqli_fetch_row($result))
+    {
+        if(!array_key_exists($row[0], $new_viewcircles))
+            $new_viewcircles[$row[0]] = " ";
+    }
+    
+    foreach ($new_viewcircles as $vid=>$new_viewcircle)
+    {    
+        
+        $old_viewcircle = mysql_get_single_value("SELECT p_vehicle_viewcircle FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_vehicleid = '$vid'  AND p_vehicle_profileid = '$pid'");
+        
+        if($old_viewcircle != $new_viewcircle)
+        {
+            $query =
+                "UPDATE geov_moos_opgrid.moos_opgrid_profile_vehicle ".
+                "SET p_vehicle_viewcircle = '$new_viewcircle' ".
+                "WHERE p_vehicle_vehicleid = '$vid' AND p_vehicle_profileid = '$pid'";
+
+
+            
+            mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+
+            $is_new_viewobject = true;
+        }
+    }
+
     return $is_new_viewobject;
 }
 
@@ -759,6 +834,54 @@ function plot_viewpolygon($datum)
     $kml->pop(); // Folder
 
 }
+
+function plot_viewcircle($datum)
+{
+    
+    global $kml, $connection;
+    global $pid;
+    global $geodesy;
+    
+    $kml->push("Folder", array("id" => "viewcircle_folder"));
+    $kml->element("name", "viewcircles");
+    
+    $query = "SELECT p_vehicle_viewcircle FROM geov_moos_opgrid.moos_opgrid_profile_vehicle WHERE p_vehicle_profileid = '$pid'";
+    
+    $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
+
+    while($row = mysqli_fetch_row($result))
+    {
+        //  x=344.91,y=-380.53,radius=606.43,duration=0,label=h1
+        // 0 -> x=344.91
+        // 1 -> y=-380.53
+        // 2 -> radius=606.43
+        // ...       
+        $pairs = explode(",", $row[0]);
+
+        if(sizeof($pairs) >= 2)
+        {
+                foreach($pairs as $key=>$pair)
+                {
+                             $p = explode("=", $pair);
+                             $circle_params[$p[0]] = $p[1];
+                }
+
+                $label = $circle_params["label"];
+                $v_name = substr($label, 0, strrpos($label, "_"));
+
+                $geodesy->setUTM((int)$circle_params["x"]+(int)$datum["x"], (int)$circle_params["y"] + (int)$datum["y"], $datum["zone"]);
+                $geodesy->convertTMtoLL();
+                $lat = $geodesy->Lat();
+                $lon = $geodesy->Long();
+                $kml->kml_viewcircle($lat, $lon, $v_name, $circle_params["radius"]);
+        }
+    }
+    
+
+    $kml->pop(); // Folder
+
+}
+
 
 
 function autoshow($enabled, $expand, $grid, $datum)
