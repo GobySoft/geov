@@ -524,7 +524,7 @@ function read_viewobjects()
         "WHERE data_variable='OLD_VIEW_POLYGON' ".
         "AND data_userid = $sim_id ".
         "AND data_time >= UNIX_TIMESTAMP()-".POLY_EXPIRE." ".
-        "ORDER BY data_id DESC LIMIT 10";
+        "ORDER BY data_id DESC";
     
     $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
@@ -593,7 +593,7 @@ function read_viewobjects()
         "WHERE data_variable='OLD_VIEW_POINT' ".
         "AND data_userid = $sim_id ".
         "AND data_time >= UNIX_TIMESTAMP()-".POINT_EXPIRE." ".
-        "ORDER BY data_id DESC LIMIT 20";
+        "ORDER BY data_id DESC";
     
     $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
@@ -669,7 +669,7 @@ function read_viewobjects()
         "WHERE data_variable='VIEW_CIRCLE' ".
         "AND data_userid = $sim_id ".
         "AND data_time >= UNIX_TIMESTAMP()-".POLY_EXPIRE." ".
-        "ORDER BY data_id DESC LIMIT 10";
+        "ORDER BY data_id DESC";
     
     $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
 
