@@ -76,6 +76,11 @@ $gen_parameter =
             "mysql_key" => "profile_markers",
             "input" => "text",
             ),
+            array(
+            "title" => "linestring specified in lat/lon. <br /> format: latA1,lonA1,latA2,lonA2,latA3,lonA3,nameA:latB1,lonB1,...latBN,lonBN,nameB",
+            "mysql_key" => "profile_polygons",
+            "input" => "text",
+            ),
         array(
             "title" => "automatically show vehicles within opregion",
             "mysql_key" => "profile_autoshow",
