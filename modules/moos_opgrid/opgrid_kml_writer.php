@@ -10,7 +10,7 @@ class opgrid_kml_writer extends kml_writer
     }
 
     
-    function kml_opbox_label($name, $lat, $lon, $color, $id)
+    function kml_opbox_label($name, $lat, $lon, $color, $id, $scale = 1)
     {
         $this->push("Placemark", array("id"=>$id));
         $this->element("name", $name);
@@ -21,7 +21,7 @@ class opgrid_kml_writer extends kml_writer
         $this->element("ListStyle", "");
         $this->push("LabelStyle");
         $this->element("color", $color);
-        $this->element("scale", "1");
+        $this->element("scale", $scale);
         $this->pop();
         $this->pop();
         $this->push("Point");
@@ -77,6 +77,36 @@ class opgrid_kml_writer extends kml_writer
         //$this->kml_opbox_label($name, $lat[0], $lon[0], "ffffffff", "viewplot_label_".$name);
         
     }
+
+
+    function kml_static_polygon($lat, $lon, $name)
+    {
+        $alpha = 0.5;
+
+        $r = 255;
+        $g = 150;
+        $b = 150;
+
+
+        $this->push("Placemark", array("id"=>"viewplot_".$name));
+        $this->element("name", $name);
+        
+        $this->push("LineString");
+        $this->element("tessellate", "1");
+        $this->push("coordinates");
+
+        for($i = 0; $i < sizeof($lat); ++$i)
+        {
+            $this->insert($lon[$i].",".$lat[$i].",0");
+        }
+        
+        $this->pop();
+        $this->pop();
+        $this->pop();
+        $this->kml_opbox_label($name, $lat[0], $lon[0], sprintf("%02X%02X%02X%02X", $alpha*255, $b, $g, $r), "viewplot_label_".$name, 0.8);
+        
+    }
+
 
     function kml_viewcircle($lat, $lon, $name, $radius)
     {

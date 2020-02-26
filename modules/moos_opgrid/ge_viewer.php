@@ -81,6 +81,7 @@ function opgrid()
     $opbox_latlon = $row["profile_opbox_latlong"]; // lat1,lon1:lat2,lon2
 
     $markers = $row["profile_markers"]; // x1,y1,name:x2,y2,name
+    $static_polygons = $row["profile_polygons"]; //  latA1,lonA1,latA2,lonA2,latA3,lonA3,nameA:latB1,lonB1,...latBN,lonBN,nameB
     
     $datum["lat"] = (double)$row["profile_datumlat"];
     $datum["lon"] = (double)$row["profile_datumlon"];
@@ -271,6 +272,8 @@ function opgrid()
     {
         // do markers
         plot_markers($markers, $datum);
+
+        plot_static_polygons($static_polygons, $datum);
         
         $is_new_viewobject = read_viewobjects();
         plot_viewpolygon($datum);
@@ -504,6 +507,51 @@ function plot_markers($markers, $datum)
             $lon = $geodesy->Long();
             
             $kml->kml_marker($lat, $lon, $xyname[2]);
+        }
+    }
+    
+    $kml->pop(); // Folder
+    
+}
+
+function plot_static_polygons($static_polygons, $datum)
+{
+    global $kml, $connection;
+    global $geodesy;
+
+    $kml->push("Folder", array("id" => "static_polygons_folder"));
+    $kml->element("name", "static_polygons");
+
+    $static_polygons_split = array();
+    // split static_polygons string in array
+
+    
+    if($static_polygons)
+    {
+        $static_polygons_partial = explode(":", $static_polygons);
+        foreach ($static_polygons_partial as $key=>$value)
+        {
+            $polygon_arr = explode(",", $static_polygons_partial[$key]); 
+
+            $count = count($polygon_arr);
+            if($count % 2 == 0 || $count < 5)
+            {
+               $kml->kerr("Invalid static polygon string: ".$static_polygons_partial[$key]);
+            }
+            
+            $lat = array();
+            $lon = array();
+            $name = "";
+            for($i = 0; $i < $count; ++$i)
+            {
+                if($i == $count - 1)
+                    $name = $polygon_arr[$i];
+                elseif($i % 2 == 0)
+                    $lat[] = $polygon_arr[$i];
+                else
+                    $lon[] = $polygon_arr[$i];
+            }
+            $kml->kml_static_polygon($lat, $lon, $name);
         }
     }
     
