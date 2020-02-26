@@ -57,7 +57,8 @@ class opgrid_kml_writer extends kml_writer
     }
 
 
-    function kml_viewplot($lat, $lon, $name)
+    // color = RGB hex code, alpha = [0, 1]
+    function kml_viewplot($lat, $lon, $name, $color, $alpha)
     {
         $this->push("Placemark", array("id"=>"viewplot_".$name));
         $this->element("name", $name);
@@ -73,6 +74,15 @@ class opgrid_kml_writer extends kml_writer
         
         $this->pop();
         $this->pop();
+
+
+        $this->push("Style");
+        $this->push("LineStyle");
+        $this->element("width", "0.5");
+        $this->element("color", sprintf("%02X", $alpha*255).$color);
+        $this->pop();
+        $this->pop();
+
         $this->pop();
         //$this->kml_opbox_label($name, $lat[0], $lon[0], "ffffffff", "viewplot_label_".$name);
         
