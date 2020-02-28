@@ -851,6 +851,7 @@ function plot_viewpolygon($datum)
         "FROM geov_moos_opgrid.moos_opgrid_profile_vehicle ".
         "JOIN geov_core.core_profile_vehicle ".
         "ON moos_opgrid_profile_vehicle.p_vehicle_vehicleid=core_profile_vehicle.p_vehicle_vehicleid ".
+        "AND moos_opgrid_profile_vehicle.p_vehicle_profileid=core_profile_vehicle.p_vehicle_profileid ".
         "WHERE moos_opgrid_profile_vehicle.p_vehicle_profileid = '$pid'";
     
     $result = mysqli_query($connection,$query) or $kml->kerr(mysqli_error($connection)."\n".$query);
