@@ -364,6 +364,7 @@ function header_with_message($location = "")
     global $message;
     global $cid;
     global $vehicleid;
+    global $connection;
     
     
     $query =
@@ -382,6 +383,9 @@ function header_with_message($location = "")
 function save()
 {
     global $vehicleid;
+    global $connection;
+    global $message;
+
     $query = "UPDATE core_vehicle SET ";
     
     $j=0;
