@@ -4,7 +4,7 @@ require_once("../../includes/kml_writer.php");
 
 class ctd_kml_writer extends kml_writer
 {
-    function ctd_kml_writer()
+    function __construct()
     {
         $this->kml_writer();
     }

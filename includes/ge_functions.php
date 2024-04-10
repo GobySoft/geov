@@ -163,10 +163,14 @@ function instantiate_modules($profileid, $path = "./")
         }
     }
     
-    
+       
     foreach($module as $id => $location)
     {
         include($path.$location);
+
+        if(!isset($veh_parameter))
+           $veh_parameter='';
+
         $module_class[$id] = new Module($modulename,
                                         $mysql_base_table,
                                         $mysql_sub_table,
@@ -177,6 +181,7 @@ function instantiate_modules($profileid, $path = "./")
         
     }
     
+
     return $module_class;
 }
 

@@ -1078,16 +1078,16 @@ function profile_save($profileid)
     
 //deal with ip binding business
     $ip = "";
-    if(isset($_POST[iplocal]))
+    if(isset($_POST['iplocal']))
     {
         $ip = $_SERVER['REMOTE_ADDR'];
     }
     else
     {
-        $ip = (abs((int)$_POST[ip0]%256)).".".
-            (abs((int)$_POST[ip1]%256)).".".
-            (abs((int)$_POST[ip2]%256)).".".
-            (abs((int)$_POST[ip3]%256));
+        $ip = (abs((int)$_POST['ip0']%256)).".".
+            (abs((int)$_POST['ip1']%256)).".".
+            (abs((int)$_POST['ip2']%256)).".".
+            (abs((int)$_POST['ip3']%256));
     }
 
     
