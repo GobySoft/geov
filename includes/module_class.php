@@ -24,8 +24,8 @@ class Module
     //gen parameter
     var $gtable = array();
 
-    function Module($name, $base, $sub, $vtable, $gtable, $html)
-    {
+    function __construct($name, $base, $sub, $vtable, $gtable, $html)
+    {                
         if($name)
             $this->name = $name;
         if($base)
@@ -506,7 +506,17 @@ class Module
         
         foreach($this->vtable as $value)
         {
-            //disregard certain items for certain modes
+            if (!array_key_exists("realtime", $value)) {
+               $value["realtime"] = "true";
+            }
+            if (!array_key_exists("playback", $value)) {
+               $value["realtime"] = "true";
+            }
+            if (!array_key_exists("history", $value)) {
+               $value["realtime"] = "true";
+            }
+
+            //disregard certain items for certain modes 
             if($profilemode == "realtime" && $value["realtime"] == "false")
                 continue;
             

@@ -4,7 +4,7 @@ require_once("../../includes/kml_writer.php");
 
 class opgrid_kml_writer extends kml_writer
 {
-    function opgrid_kml_writer()
+    function __construct()
     {
         $this->kml_writer();
     }
@@ -146,7 +146,7 @@ class opgrid_kml_writer extends kml_writer
             
         $this->push("Style");
         $this->push("LineStyle");
-        $this->element("width", "1");
+        $this->element("width", "0.7");
         $this->element("color", sprintf("%02X%02X%02X%02X", $alpha*255, $b, $g, $r));
         $this->pop();
         $this->pop();
