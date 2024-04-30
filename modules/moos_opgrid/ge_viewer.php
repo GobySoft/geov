@@ -13,6 +13,8 @@ define("AUTOSHOW_DECAY", 600);
 define("POLY_EXPIRE", 8*3600);
 define("POINT_EXPIRE", 3600);
 
+$altitude_mode="absolute";
+
 /************************************************************************************
  connections
 ************************************************************************************/
@@ -49,7 +51,6 @@ if(!$preload)
 
 $kml->echo_kml();
 
-    
 /************************************************************************************
  functions
 ************************************************************************************/
@@ -63,6 +64,7 @@ function opgrid()
     global $sim_id;
     global $pmode;
     global $preload;
+    global $altitude_mode;
     
     $kml->push("Document");
     
@@ -223,6 +225,7 @@ function opgrid()
             $kml->element("styleUrl", "#moos_opgrid_gridstyle");
             $kml->push("LineString");
             $kml->element("tessellate", "1");
+            $kml->element("altitudeMode", $altitude_mode);
             $kml->push("coordinates");
     
             foreach($grid as $value)
@@ -299,6 +302,7 @@ function opgrid()
 function define_styles()
 {
     global $kml, $connection;
+    global $altitude_mode;
     
     //define styles
     $kml->push("Style", array("id"=>"moos_opgrid_opboxstyle"));
@@ -366,6 +370,7 @@ function define_styles()
     $kml->element("styleUrl", "#moos_opgrid_opboxstyle");
     $kml->push("LineString");
     $kml->element("tessellate", "1");
+    $kml->element("altitudeMode", $altitude_mode);
     $kml->push("coordinates");
 
 //    echo "<pre>";
@@ -380,7 +385,8 @@ function make_grid($gridspacing, $min, $max, $datum, $style, $label)
 {
     global $kml, $connection;
     global $geodesy;
-    
+    global $altitude_mode;
+
     
     for($i = (ceil($min["x"]/$gridspacing)*$gridspacing); $i <= (floor($max["x"]/$gridspacing)*$gridspacing); $i += $gridspacing)
     {            
@@ -393,6 +399,7 @@ function make_grid($gridspacing, $min, $max, $datum, $style, $label)
 
         $kml->push("LineString");
         $kml->element("tessellate", "1");
+        $kml->element("altitudeMode", $altitude_mode);
         $kml->push("coordinates");
         
         $geodesy->setUTM($i+$datum["x"], $min["y"] + $datum["y"], $datum["zone"]);
@@ -433,6 +440,7 @@ function make_grid($gridspacing, $min, $max, $datum, $style, $label)
 
         $kml->push("LineString");
         $kml->element("tessellate", "1");
+        $kml->element("altitudeMode", $altitude_mode);
         $kml->push("coordinates");
             
         

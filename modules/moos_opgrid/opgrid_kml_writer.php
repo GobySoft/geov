@@ -12,6 +12,7 @@ class opgrid_kml_writer extends kml_writer
     
     function kml_opbox_label($name, $lat, $lon, $color, $id, $scale = 1)
     {
+        global $altitude_mode;
         $this->push("Placemark", array("id"=>$id));
         $this->element("name", $name);
         $this->push("Style");
@@ -26,6 +27,7 @@ class opgrid_kml_writer extends kml_writer
         $this->pop();
         $this->push("Point");
         $this->element("coordinates",($lon).",".($lat));
+        $this->element("altitudeMode", $altitude_mode);
 
 
         $this->pop();
@@ -34,6 +36,8 @@ class opgrid_kml_writer extends kml_writer
 
     function kml_marker($lat, $lon, $name, $color = "AAc22eff")
     {
+        global $altitude_mode;
+
         $this->push("Placemark");
         $this->element("name", $name);
         $this->push("Style");
@@ -51,7 +55,8 @@ class opgrid_kml_writer extends kml_writer
         
         $this->push("Point");
         $this->element("coordinates",($lon).",".($lat));
-        
+        $this->element("altitudeMode", $altitude_mode);
+
         $this->pop();
         $this->pop();
     }
@@ -60,11 +65,13 @@ class opgrid_kml_writer extends kml_writer
     // color = RGB hex code, alpha = [0, 1]
     function kml_viewplot($lat, $lon, $name, $color, $alpha)
     {
+        global $altitude_mode;
         $this->push("Placemark", array("id"=>"viewplot_".$name));
         $this->element("name", $name);
         
         $this->push("LineString");
         $this->element("tessellate", "1");
+        $this->element("altitudeMode", $altitude_mode);
         $this->push("coordinates");
 
         for($i = 0; $i < sizeof($lat); ++$i)
@@ -91,6 +98,7 @@ class opgrid_kml_writer extends kml_writer
 
     function kml_static_polygon($lat, $lon, $name)
     {
+        global $altitude_mode;
         $alpha = 0.5;
 
         $r = 255;
@@ -103,6 +111,7 @@ class opgrid_kml_writer extends kml_writer
         
         $this->push("LineString");
         $this->element("tessellate", "1");
+        $this->element("altitudeMode", $altitude_mode);
         $this->push("coordinates");
 
         for($i = 0; $i < sizeof($lat); ++$i)
@@ -120,7 +129,7 @@ class opgrid_kml_writer extends kml_writer
 
     function kml_viewcircle($lat, $lon, $name, $radius)
     {
-    
+        global $altitude_mode;    
         $r = 0;
         $g = 127;
         $b = 255;
@@ -131,6 +140,7 @@ class opgrid_kml_writer extends kml_writer
         $this->element("name", $name);
         $this->push("LineString");
         $this->element("tessellate", "1");
+        $this->element("altitudeMode", $altitude_mode);
         $this->push("coordinates");
 
         $n=100;
