@@ -44,6 +44,12 @@ $html->hr();
 $html->h3("news:");
 
 $html->push("p");
+$html->insert("3.10.25: README added to Github page: https://github.com/GobySoft/geov, including script on how to install a local GEOV instance."));
+$html->insert(".");
+$html->pop(); // </p>
+
+
+$html->push("p");
 $html->insert("2.9.09: google earth version 5.0 released with support for bathymetry. geov has been updated to include depth display (see screenshot below). numerous bugs fixed and new features added: ");
 $html->a("release notes", array("href"=>"release_notes.txt"));
 $html->insert(".");
