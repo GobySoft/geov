@@ -1,0 +1,195 @@
+#!/bin/bash
+
+if [[ $UID -ne 0 ]]; then
+    printf "\33[1;31mgeov_mirror (fail): you must run this script as root \33[1;0m \n" 1>&2
+    exit 1
+fi
+
+#first install the packages we need
+printf "\33[1;94mgeov_mirror: this will create a server running geov on this machine. warning: this will set your MYSQL root password to 'geovroot' and overwrite ANY old geov_* tables. is this ok [y/n]?\33[1;0m "
+read ANS
+if [ "$ANS" != "y" ]; then
+    exit 0
+fi
+
+
+# no support for Fedora anymore...
+MACHINE=u
+
+# minimal copy
+COPY_TYPE=m
+
+while [ "$COPY_TYPE" != "f" ] && [ "$COPY_TYPE" != "m" ]; do
+    printf "\33[1;94mgeov_mirror: do you want to do a full copy (all data) or a minimal copy (structure only) [f/m]?\33[1;0m "
+    read COPY_TYPE
+done
+
+if [ "$COPY_TYPE" == "f" ]; then
+    FETCH_TYPE="full"
+else
+    FETCH_TYPE="minimal"
+fi
+
+apt-get update
+
+PKG="apt-get -y"
+
+source /etc/lsb-release
+CODENAME=${DISTRIB_CODENAME}
+
+echo $CODENAME
+
+APACHE_PKG="apache2"
+PHP_PKG="php php-mysql"
+
+MYSQL_PKG="mysql-server"
+MYSQL_DEV_PKG="libmysqlclient-dev"
+PHPMYADMIN_PKG="phpmyadmin"
+
+printf "\33[1;94mgeov_mirror: installing needed packages with $PKG \33[1;0m \n"
+
+if ! $PKG install $APACHE_PKG
+then
+    printf "\33[1;31mgeov_mirror (fail): could not install apache2 \33[1;0m \n"
+    exit 1
+fi
+
+if ! $PKG install $PHP_PKG
+then
+    printf "\33[1;31mgeov_mirror (fail): could not install php \33[1;0m \n"
+    exit 1
+fi
+
+if [ "$PKG" == "yum" ]; then
+    if ! $PKG install php-mysql; then
+        printf "\33[1;31mgeov_mirror (fail): could not install php-mysql \33[1;0m \n"
+        exit 1
+    fi
+fi
+
+
+
+if ! $PKG install $MYSQL_PKG
+then
+    printf "\33[1;31mgeov_mirror (fail): could not install mysql-server \33[1;0m \n"
+    exit 1
+fi
+
+
+
+if ! $PKG install $MYSQL_DEV_PKG
+then
+    printf "\33[1;31mgeov_mirror (fail): could not install $MYSQL_DEV_PKG \33[1;0m \n"
+    exit 1
+fi
+
+
+WGET_PKG=wget
+if ! $PKG install $WGET_PKG
+then
+    printf "\33[1;31mgeov_mirror (fail): could not install $WGET_PKG \33[1;0m \n"
+    exit 1
+fi
+
+GIT_PKG=git
+if ! $PKG install $GIT_PKG
+then
+    printf "\33[1;31mgeov_mirror (fail): could not install $GIT_PKG \33[1;0m \n"
+    exit 1
+fi
+
+
+
+#if ! $PKG install $PHPMYADMIN_PKG
+#then
+#    printf "\33[1;31mgeov_mirror (fail): could not install phpmyadmin \33[1;0m \n"
+#    exit 1
+#fi
+
+
+
+printf "\33[1;32mdone. \33[1;0m \n";
+
+
+WEB_ROOT="/var/www/html"
+
+#place proper sym links and move libraries
+rm $WEB_ROOT/index.html
+rm $WEB_ROOT/index.php
+
+# still issues in fedora with phpmyadmin
+ln -s /usr/share/$PHPMYADMIN_PKG $WEB_ROOT/phpmyadmin
+
+if [ "$MACHINE" == "f" ]; then
+    cp /usr/lib/mysql/* /usr/lib
+fi
+
+sleep 2
+/etc/init.d/$APACHE_PKG restart 
+
+printf "\33[1;94mgeov_mirror: writing mysql permissions \33[1;0m \n"
+
+if [ "$MACHINE" == "u" ]; then
+    MYSQLD="mysql"
+else
+    MYSQLD="mysqld"
+fi
+
+/etc/init.d/$MYSQLD start
+/etc/init.d/$MYSQLD stop 
+mkdir -p /var/run/mysqld
+chown mysql:mysql /var/run/mysqld
+mysqld_safe --skip-grant-tables & 
+sleep 3
+# Ubuntu 20.04 version of mysql requires you to set the root password to empty with mysqld_safe, then set it to something else with the normal mysql running
+mysql -u root -e "USE mysql; UPDATE user SET authentication_string='' WHERE User='root'; UPDATE user SET plugin=\"mysql_native_password\" WHERE User='root'; FLUSH PRIVILEGES;"
+killall -w mysqld
+/etc/init.d/$MYSQLD start 
+
+# actually set the root password
+mysql -u root --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'geovroot'; "
+
+mysql -u root --password=geovroot -e "DROP USER ''@'%'; FLUSH PRIVILEGES;"
+mysql -u root --password=geovroot -e "DROP USER 'sea'@'%'; FLUSH PRIVILEGES;"
+mysql -u root --password=geovroot -e "DROP USER 'sea'@'localhost'; FLUSH PRIVILEGES;"
+
+mysql -u root --password=geovroot -e "CREATE USER 'sea'@'%' IDENTIFIED BY 'saline12'; GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO 'sea'@'%'; FLUSH PRIVILEGES;"
+mysql -u root --password=geovroot -e "CREATE USER 'sea'@'localhost' IDENTIFIED BY 'saline12'; GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO 'sea'@'localhost'; FLUSH PRIVILEGES;"
+
+
+printf "\33[1;32mdone. \33[1;0m \n";
+
+
+
+printf "\33[1;94mgeov_mirror: fetching geov mysql data \33[1;0m \n"
+if ! wget http://gobysoft.org/geov/mysql_dump.php?type=$FETCH_TYPE -O geov_dump.sql; 
+then
+    printf "\33[1;31mgeov_mirror (fail): could not fetch mysql data \33[1;0m \n";
+    exit 1
+fi
+
+
+
+
+printf "\33[1;32mdone. \33[1;0m \n";
+
+printf "\33[1;94mgeov_mirror: writing geov mysql data \33[1;0m \n"
+if ! mysql -u root --password=geovroot < geov_dump.sql
+then
+    printf "\33[1;31mgeov_mirror (fail): could not write mysql data \33[1;0m \n";
+    exit 1
+fi
+
+rm geov_dump.sql
+
+printf "\33[1;32mdone. \33[1;0m \n";
+
+printf "\33[1;94mgeov_mirror: fetching geov website code \33[1;0m \n"
+
+if ! git clone https://github.com/GobySoft/geov.git $WEB_ROOT/geov
+then 
+    printf "\33[1;31mgeov_mirror (fail): could not fetch geov website code \33[1;0m \n";
+    exit 1
+fi
+
+printf "\33[1;32mgeov_mirror: finished successfully.  \33[1;0m";
