@@ -44,8 +44,7 @@ $html->hr();
 $html->h3("news:");
 
 $html->push("p");
-$html->insert("3.10.25: README added to Github page: https://github.com/GobySoft/geov, including script on how to install a local GEOV instance."));
-$html->insert(".");
+$html->insert("3.10.25: README added to Github page: <a href=https://github.com/GobySoft/geov>https://github.com/GobySoft/geov</a>, including script on how to install a local GEOV instance.");
 $html->pop(); // </p>
 
 
